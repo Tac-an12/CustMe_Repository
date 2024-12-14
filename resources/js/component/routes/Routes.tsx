@@ -28,10 +28,13 @@ import MapView from "../views/mapview";
 import DesignerPostForm from "../views/forms/Admin/designerForm";
 import ProviderPostForm from "../views/forms/Admin/provideForm";
 import Allpost from "../views/forms/Admin/MyPost1Form";
-import PaymentSuccess from "../views/PaymentSuccess";
-import PaymentFailed from "../views/PaymentFailed";
+
 import Balance from "../views/UserBalance";
 import PaymentsTable from "../views/UserBalance";
+import ForgotPassword from "../views/forgotpassword";
+import ResetPassword from "../views/resetpassword";
+import EmailVerification from "../views/verifyemail";
+import MeetTheTeam from "../views/forms/Admin/MeetTheTeam";
 
 const AppRoutes = () => {
   return (
@@ -43,8 +46,15 @@ const AppRoutes = () => {
         <Route path="/join" element={<CommunityJoin />} />
         <Route path="/desingner-Info" element={<DesignerInformationPage />} />
         <Route path="/printing-Info" element={<PrintingInformationPage />} />
-      </Route>
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/email/verify/:id/:hash" element={<EmailVerification />} />
 
+      </Route>
+  
+
+      {/* ->action('Reset Your Password', url(config('app.url').'/reset-password/'.$this->token)) 
+\ */}
       {/* Protected routes for Admin */}
       <Route element={<ProtectedRoutes roles={["Admin"]} />}>
         <Route path="/admin" element={<AdminHome />} />
@@ -55,7 +65,7 @@ const AppRoutes = () => {
       <Route element={<ProtectedRoutes roles={["User"]} />}>
         <Route path="/user" element={<UserHome />} />
         <Route path="/getlocation" element={<MapView />} />
-        {/* <Route path="/userbalance" element={<Balance />} /> */}
+        <Route path="/meet-the-team" element={<MeetTheTeam />} />
 
         {/* <Route path="/List-of-Desinger&Printing-Provider" element={<ArtistPrintingProviders />} /> */}
       </Route>
@@ -84,7 +94,7 @@ const AppRoutes = () => {
         <Route path="/chat/:userId" element={<ChatForm />} />
         <Route path="/chats" element={<ChatForm />} />
         <Route path="/users/:id/profile" element={<UserProfileForm />} />
-        <Route path="/share-location" element={<ShareLocation />} />
+
         <Route
           path="/List-of-Desinger&Printing-Provider"
           element={<ArtistPrintingProviders />}
@@ -97,11 +107,6 @@ const AppRoutes = () => {
         <Route path="/designerpost" element={<DesignerPostForm />} />
         <Route path="/providerpost" element={<ProviderPostForm />} />
         <Route path="/allposts" element={<Allpost />} />
-        <Route path="/payment/success" element={<PaymentSuccess />} />
-        <Route
-          path="/payment/failed"
-          element={<PaymentFailed message="Payment not found." />}
-        />
         <Route path="/paymentstable" element={<PaymentsTable />} />
       </Route>
 
@@ -114,8 +119,15 @@ const AppRoutes = () => {
       >
         <Route path="/posts" element={<CreatePostForm />} />
         <Route path="/users/:id/profile" element={<UserProfileForm />} />
+        <Route path="/share-location" element={<ShareLocation />} />
       </Route>
+
+     
     </Routes>
+
+    
+
+    
   );
 };
 

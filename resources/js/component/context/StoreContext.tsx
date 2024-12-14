@@ -17,13 +17,19 @@ export interface Store {
   user_id: number;
 }
 
+interface UserStoreResponse {
+  exists: boolean;
+  store?: Store;
+}
+
 interface StoreContextProps {
   stores: Store[];
   fetchStores: () => Promise<void>;
+  fetchUserStores: () => Promise<UserStoreResponse>; // Updated return type
   createStore: (store: Omit<Store, 'id' | 'user_id'>) => Promise<boolean>;
   updateStore: (id: number, store: Store) => Promise<boolean>;
   deleteStore: (id: number) => Promise<boolean>;
-  getCurrentLocation: () => Promise<Location | null>; // New method for geolocation
+  getCurrentLocation: () => Promise<Location | null>;
   loading: boolean;
 }
 
@@ -46,30 +52,41 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const fetchUserStores = async (): Promise<UserStoreResponse> => {
+    if (!user) {
+        console.log('No user found, returning default response.');
+        return { exists: false };
+    }
+
+    setLoading(true);
+    console.log('Fetching user stores for user ID:', user.id);
+
+    try {
+        const response = await apiService.get(`/user-store/${user.id}`, { withCredentials: true });
+        console.log('Fetched user stores response:', response.data);
+        return response.data as UserStoreResponse; // Ensure the correct type
+    } catch (error) {
+        console.error('Failed to fetch user stores:', error);
+        return { exists: false }; // Return a default response on error
+    } finally {
+        setLoading(false);
+        console.log('Loading state set to false.');
+    }
+};
+
   const createStore = async (store: Omit<Store, 'id' | 'user_id'>): Promise<boolean> => {
     if (!user) return false;
 
     const storeWithUserId = { ...store, user_id: user.id };
     try {
-        const response = await apiService.post('/stores', storeWithUserId, { withCredentials: true });
-        setStores((prevStores) => [...prevStores, response.data]);
-        return true;
+      const response = await apiService.post('/stores', storeWithUserId, { withCredentials: true });
+      setStores((prevStores) => [...prevStores, response.data]);
+      return true;
     } catch (error) {
-        // Improved error handling
-        if (error.response) {
-            // Server responded with a status other than 200
-            console.error('Failed to create store:', error.response.data);
-        } else if (error.request) {
-            // The request was made but no response was received
-            console.error('No response received when creating store:', error.request);
-        } else {
-            // Something happened in setting up the request that triggered an error
-            console.error('Error creating store:', error.message);
-        }
-        return false;
+      console.error('Failed to create store:', error);
+      return false;
     }
-};
-
+  };
 
   const updateStore = async (id: number, store: Store): Promise<boolean> => {
     try {
@@ -93,16 +110,15 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // New method to get the current geolocation
   const getCurrentLocation = (): Promise<Location | null> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             resolve({
               longitude: position.coords.longitude,
               latitude: position.coords.latitude,
-              address: '', // You might want to reverse geocode this later
+              address: '',
             });
           },
           (error) => {
@@ -119,7 +135,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   return (
     <StoreContext.Provider
-      value={{ stores, fetchStores, createStore, updateStore, deleteStore, getCurrentLocation, loading }}
+      value={{ stores, fetchStores, fetchUserStores, createStore, updateStore, deleteStore, getCurrentLocation, loading }}
     >
       {children}
     </StoreContext.Provider>

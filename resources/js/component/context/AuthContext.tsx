@@ -9,6 +9,7 @@ export interface PersonalInformation {
   profilepicture: string;
   coverphoto: string;
 }
+
 export interface Certificate {
   id: number;
   file_path: string;
@@ -34,17 +35,18 @@ export interface User {
   role: Role;
   verified: boolean;
   personal_information: PersonalInformation;
-  certificates?: Certificate[];  // Optional property for certificates
-  portfolios?: Portfolio[];  
+  certificates?: Certificate[];
+  portfolios?: Portfolio[];
 }
 
 interface AuthContextProps {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; errorMessage: string | null }>;
   logout: () => Promise<void>;
   fetchAllUsers: (page: number) => Promise<{ data: User[]; last_page: number }>;
   acceptUser: (userId: number, verified: boolean) => Promise<boolean>;
   loading: boolean;
+  errorMessage: string | null; // Added to hold error messages
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -56,6 +58,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // State for error messages
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -77,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; errorMessage: string | null }> => {
     try {
       const response = await apiService.post('/login', { email, password }, { withCredentials: true });
       apiService.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
@@ -89,12 +92,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user.personal_information = personalInfoResponse.data.personal_information;
       }
 
-      setUser(user); 
-      return true;
+      setUser(user);
+      return { success: true, errorMessage: null };
     } catch (error) {
       console.error("Login error:", error);
       setUser(null);
-      return false;
+
+      let message = "An unexpected error occurred. Please try again later.";
+      if (error.response && error.response.data) {
+        message = error.response.data.error || message;
+      }
+      setErrorMessage(message); // Set the error message in context
+      return { success: false, errorMessage: message };
     }
   };
 
@@ -106,27 +115,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem('authToken');
     } catch (error) {
       console.error("Logout error:", error);
+      setErrorMessage("Error logging out. Please try again.");
     }
   };
 
-  const fetchAllUsers = async (page: number): Promise<{ data: User[], last_page: number }> => {
+  const fetchAllUsers = async (page: number): Promise<{ data: User[]; last_page: number }> => {
     try {
       const response = await apiService.get(`/users?page=${page}`, { withCredentials: true });
-  
+
       return {
         data: response.data.users.data.map((user: User) => ({
           ...user,
-          certificates: user.certificates || [],  // Assumes certificates are included in user data
-          portfolios: user.portfolios || [],      // Assumes portfolios are included in user data
+          certificates: user.certificates || [],
+          portfolios: user.portfolios || [],
         })),
         last_page: response.data.users.last_page,
       };
     } catch (error) {
       console.error("Failed to fetch users:", error);
+      setErrorMessage("Error fetching users. Please try again.");
       return { data: [], last_page: 1 };
     }
   };
-  
 
   const acceptUser = async (userId: number, verified: boolean): Promise<boolean> => {
     try {
@@ -134,12 +144,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return response.status === 200;
     } catch (error) {
       console.error("Error accepting user:", error);
+      setErrorMessage("Error accepting user. Please try again.");
       return false;
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, fetchAllUsers, acceptUser, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, fetchAllUsers, acceptUser, loading, errorMessage }}>
       {children}
     </AuthContext.Provider>
   );

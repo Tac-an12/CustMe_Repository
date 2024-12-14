@@ -6,7 +6,9 @@ export default {
         "./resources/**/*.tsx",
     ],
     theme: {
-        extend: {},
+        extend: {
+            scrollBehavior: ['smooth'],
+        },
     },
     plugins: [require("daisyui")],
     daisyui: {

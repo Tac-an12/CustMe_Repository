@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\TaskApiController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PasswordResetController;
 
 Route::get('/{path?}', function () {
     return view('app'); // Adjust this to the correct view file
@@ -13,5 +13,5 @@ Route::get('/{path?}', function () {
 //     Route::post('/task', [TaskApiController::class, 'saveTask']);
 // });
 
-Route::get('/payment-success', [PaymentController::class, 'paymentSuccess'])->name('payment.success');
-Route::get('/payment-failed', [PaymentController::class, 'paymentFailed'])->name('payment.failed');
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail']);
+Route::get('/reset-password', [PasswordResetController::class, 'reset'])->name('password.reset');

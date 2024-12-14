@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Google, Facebook } from "@mui/icons-material";
-import { TextField, Button, CircularProgress, Typography, Box } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { TextField, Button, CircularProgress, Typography, Box, IconButton } from "@mui/material";
 import apiServices from "../../services/apiService";
 
 const RegisterForm = () => {
@@ -25,7 +26,10 @@ const RegisterForm = () => {
   const [bio, setBio] = useState("");
   const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
   const [certificationsFiles, setCertificationsFiles] = useState<File[]>([]);
-
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
+    
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -40,16 +44,16 @@ const RegisterForm = () => {
 
     if (state?.bio) setBio(state.bio);
 
-    if (Array.isArray(state?.portfolioFile)) {
-      setPortfolioFiles(state.portfolioFile);
-    } else if (state?.portfolioFile) {
-      setPortfolioFiles([state.portfolioFile]);
+    if (Array.isArray(state?.portfolioFiles)) {
+      setPortfolioFiles(state.portfolioFiles);
+    } else if (state?.portfolioFiles) {
+      setPortfolioFiles([state.portfolioFiles]);
     }
 
-    if (Array.isArray(state?.certificationFile)) {
-      setCertificationsFiles(state.certificationFile);
-    } else if (state?.certificationFile) {
-      setCertificationsFiles([state.certificationFile]);
+    if (Array.isArray(state?.certificationFiles)) {
+      setCertificationsFiles(state.certificationFiles);
+    } else if (state?.certificationFiles) {
+      setCertificationsFiles([state.certificationFiles]);
     }
 
     if (selectedRole === "3" && state?.skills) {
@@ -80,6 +84,13 @@ const RegisterForm = () => {
     const isNumeric = /^\d+$/.test(phoneNumber);
     const isValidLength = phoneNumber.length === 11; // Must be exactly 11 characters
     setPhoneNumberError(isNumeric && isValidLength ? "" : "Phone number must be 11 numeric digits");
+  };
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev); // Toggle password visibility
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword((prev) => !prev); // Toggle confirm password visibility
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,6 +129,10 @@ const RegisterForm = () => {
         formData.append(`certificate[${index}]`, file);
       });
   
+      console.log("FormData entries:");
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
       try {
         const response = await apiServices.post("/register", formData, {
           headers: {
@@ -137,7 +152,15 @@ const RegisterForm = () => {
         setPrintingSkills([]);
         setPortfolioFiles([]);
         setCertificationsFiles([]);
-      } catch (error) {
+      } catch (error: any) {
+        if (error.response?.data?.errors?.email?.[0] === "The email has already been taken.") {
+          setRegistrationError("The email has already been taken. Please use another unique email");
+        } else if (error.response?.data?.errors?.password?.[0] === "The password field must be at least 8 characters.") {
+          setRegistrationError("The password must be at least 8 characters long.");
+        } else {
+          setRegistrationError("An error occurred during registration. Please try again.");
+        }
+        
         console.error("Registration error:", error);
       } finally {
         setLoading(false);
@@ -146,10 +169,14 @@ const RegisterForm = () => {
       setLoading(false);
     }
   };
-  
+
   const handleModalClose = () => {
     setRegistrationSuccess(false);
     navigate("/login");
+  };
+
+  const handleErrorModalClose = () => {
+    setRegistrationError(null);
   };
 
   return (
@@ -168,13 +195,6 @@ const RegisterForm = () => {
             Register Your Account
           </Typography>
 
-          {/* <Box display="flex" justifyContent="space-between" mb={2}>
-            <Button variant="contained" startIcon={<Google />} className="bg-red-600 text-white w-[48%]">Google</Button>
-            <Button variant="contained" startIcon={<Facebook />} className="bg-blue-700 text-white w-[48%]">Facebook</Button>
-          </Box>
-
-          <Typography className="text-center text-gray-500 mb-4">OR</Typography> */}
-
           <form onSubmit={handleSubmit}>
             <Box mb={3} display="flex" gap={2}>
               <TextField label="First Name" variant="outlined" fullWidth value={firstname} onChange={(e) => setFirstname(e.target.value)} required />
@@ -190,11 +210,47 @@ const RegisterForm = () => {
             </Box>
 
             <Box mb={2}>
-              <TextField label="Password" type="password" variant="outlined" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} onBlur={validatePassword} error={Boolean(passwordError)} helperText={passwordError} required />
+              <TextField
+                label="Password"
+                type={showPassword ? "text" : "password"} // Toggle between text and password
+                variant="outlined"
+                fullWidth
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onBlur={validatePassword}
+                error={Boolean(passwordError)}
+                helperText={passwordError}
+                required
+                InputProps={{
+                  endAdornment: (
+                    <IconButton onClick={togglePasswordVisibility}>
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  ),
+                }}
+              />
             </Box>
 
             <Box mb={2}>
-              <TextField label="Confirm Password" type="password" variant="outlined" fullWidth value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onBlur={validateConfirmPassword} error={Boolean(confirmPasswordError)} helperText={confirmPasswordError} required />
+              <TextField
+                label="Confirm Password"
+                type={showConfirmPassword ? "text" : "password"} // Toggle between text and password
+                variant="outlined"
+                fullWidth
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onBlur={validateConfirmPassword}
+                error={Boolean(confirmPasswordError)}
+                helperText={confirmPasswordError}
+                required
+                InputProps={{
+                  endAdornment: (
+                    <IconButton onClick={toggleConfirmPasswordVisibility}>
+                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  ),
+                }}
+              />
             </Box>
 
             <Box mb={2}>
@@ -210,9 +266,21 @@ const RegisterForm = () => {
             <div className="modal modal-open">
               <div className="modal-box">
                 <h3 className="font-bold text-lg">Registration Successful</h3>
-                <p className="py-4">Successfully registered!</p>
+                <p className="py-4">A verification email has been sent. Please check your inbox to verify your email address.</p>
                 <div className="modal-action">
                   <button className="btn" onClick={handleModalClose}>Close</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {registrationError && (
+            <div className="modal modal-open">
+              <div className="modal-box">
+                <h3 className="font-bold text-lg">Registration Error</h3>
+                <p className="py-4">{registrationError}</p>
+                <div className="modal-action">
+                  <button className="btn" onClick={handleErrorModalClose}>Close</button>
                 </div>
               </div>
             </div>

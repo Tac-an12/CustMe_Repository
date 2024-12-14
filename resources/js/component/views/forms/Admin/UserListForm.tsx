@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/sidebar';
 import Header from '../components/header';
 import { useAuth, User } from '../../../context/AuthContext'; 
-import AdminHeader from '../components/adminheader';
+
 
 const UserListForm: React.FC = () => {
   const { fetchAllUsers, user, acceptUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [openCertificates, setOpenCertificates] = useState<{ [key: number]: boolean }>({});
+  const [openPortfolios, setOpenPortfolios] = useState<{ [key: number]: boolean }>({});
 
   useEffect(() => {
     const getUsers = async (page: number) => {
@@ -44,10 +46,24 @@ const UserListForm: React.FC = () => {
     }
   };
 
+  const toggleCertificatesDropdown = (userId: number) => {
+    setOpenCertificates(prevState => ({
+      ...prevState,
+      [userId]: !prevState[userId],
+    }));
+  };
+
+  const togglePortfoliosDropdown = (userId: number) => {
+    setOpenPortfolios(prevState => ({
+      ...prevState,
+      [userId]: !prevState[userId],
+    }));
+  };
+
   return (
     <div className="flex bg-white">
       <div className="flex-1 flex flex-col">
-        <AdminHeader />
+        <Header />
         <div className="flex-1 p-8">
           <div className="space-y-8">
             <h2 className="text-2xl font-bold text-black mb-4">All Users</h2>
@@ -74,35 +90,55 @@ const UserListForm: React.FC = () => {
                       <td className="border border-gray-300 p-2 text-black">{user.role.rolename}</td>
                       <td className="border border-gray-300 p-2 text-black">{user.verified ? 'Yes' : 'No'}</td>
                       <td className="border border-gray-300 p-2 text-black">
-                        {(user.certificates && user.certificates.length > 0) ? (
-                          user.certificates.map(cert => (
-                            <a
-                              key={cert.id}
-                              href={`http://127.0.0.1:8000/storage/${cert.file_path}`}
-                              download
-                              className="text-blue-500 underline"
-                            >
-                              {cert.file_name}
-                            </a>
-                          ))
-                        ) : (
-                          'No Certificates'
+                        <button
+                          onClick={() => toggleCertificatesDropdown(user.id)}
+                          className="text-blue-500 underline"
+                        >
+                          {openCertificates[user.id] ? 'Hide Certificates' : 'Show Certificates'}
+                        </button>
+                        {openCertificates[user.id] && (
+                          <div className="mt-2 pl-4">
+                            {user.certificates && user.certificates.length > 0 ? (
+                              user.certificates.map(cert => (
+                                <a
+                                  key={cert.id}
+                                  href={`http://127.0.0.1:8000/storage/${cert.file_path}`}
+                                  download
+                                  className="text-blue-500 underline"
+                                >
+                                  {cert.file_name}
+                                </a>
+                              ))
+                            ) : (
+                              'No Certificates'
+                            )}
+                          </div>
                         )}
                       </td>
                       <td className="border border-gray-300 p-2 text-black">
-                        {(user.portfolios && user.portfolios.length > 0) ? (
-                          user.portfolios.map(portfolio => (
-                            <a
-                              key={portfolio.id}
-                              href={`http://127.0.0.1:8000/storage/${portfolio.file_path}`}
-                              download
-                              className="text-blue-500 underline"
-                            >
-                              {portfolio.file_name}
-                            </a>
-                          ))
-                        ) : (
-                          'No Portfolios'
+                        <button
+                          onClick={() => togglePortfoliosDropdown(user.id)}
+                          className="text-blue-500 underline"
+                        >
+                          {openPortfolios[user.id] ? 'Hide Portfolios' : 'Show Portfolios'}
+                        </button>
+                        {openPortfolios[user.id] && (
+                          <div className="mt-2 pl-4">
+                            {user.portfolios && user.portfolios.length > 0 ? (
+                              user.portfolios.map(portfolio => (
+                                <a
+                                  key={portfolio.id}
+                                  href={`http://127.0.0.1:8000/storage/${portfolio.file_path}`}
+                                  download
+                                  className="text-blue-500 underline"
+                                >
+                                  {portfolio.file_name}
+                                </a>
+                              ))
+                            ) : (
+                              'No Portfolios'
+                            )}
+                          </div>
                         )}
                       </td>
                       <td className="border border-gray-300 p-2 text-black">

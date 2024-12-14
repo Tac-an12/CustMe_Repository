@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\TagsController;
 use App\Http\Controllers\Api\PayMongoWebhookController;
+use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\VerificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
@@ -47,7 +49,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/stores', [StoreController::class, 'saveStore']);
     Route::put('/stores/{id}', [StoreController::class, 'updateStore']);
     Route::delete('/stores/{id}', [StoreController::class, 'deleteStore']);
-    Route::get('/stores/{id}', [StoreController::class, 'getStore']);
+    Route::get('/user-store/{userId}', [StoreController::class, 'getUserStore']);
+
 
     Route::get('/chats', [ChatController::class, 'getMessages']);
     Route::post('/send-message', [ChatController::class, 'sendMessage']);
@@ -121,3 +124,11 @@ Route::post('/register', [UserApiController::class, 'register']);
 
 Route::get('/user-skills', [SkillController::class, 'getAllUserSkills']);
 Route::get('/printing-skills', [SkillController::class, 'getAllPrintingSkills']);
+
+
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail']);
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [PasswordResetController::class, 'reset']);
+
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify');
+Route::post('/verify-email', [VerificationController::class, 'verify'])->name('verify.email');

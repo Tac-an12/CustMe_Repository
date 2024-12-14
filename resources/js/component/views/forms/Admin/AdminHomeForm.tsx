@@ -121,25 +121,25 @@ const AdminHomeForm = () => {
     doc.text("Sales Distribution", 14, 160);
     doc.text(
       `Graphic Designer Sales: Php ${formatNumber(
-        salesReport.graphic_designer_sales
+        salesReport?.graphic_designer_sales
       )}`,
       14,
       165
     );
     doc.text(
       `Printing Provider Sales: Php ${formatNumber(
-        salesReport.printing_provider_sales
+        salesReport?.printing_provider_sales
       )}`,
       14,
       170
     );
     doc.text(
-      `Highest Sale: Php ${formatNumber(salesReport.highest_sale)}`,
+      `Highest Sale: Php ${formatNumber(salesReport?.highest_sale)}`,
       14,
       175
     );
     doc.text(
-      `Total Sales: Php ${formatNumber(salesReport.total_sales)}`,
+      `Total Sales: Php ${formatNumber(salesReport?.total_sales)}`,
       14,
       180
     );

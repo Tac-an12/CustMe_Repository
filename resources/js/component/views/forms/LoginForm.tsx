@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { CircularProgress, TextField, Button } from "@mui/material";
+import {
+  CircularProgress,
+  TextField,
+  Button,
+  InputAdornment,
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -9,7 +20,9 @@ const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login, user } = useAuth();
+  const [showPassword, setShowPassword] = useState(false); // State for toggling password visibility
+  const [errorMessage, setErrorMessage] = useState(""); // State for error messages that trigger the dialog
+  const { login, user } = useAuth(); // Access errorMessage from context
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,21 +73,39 @@ const LoginForm = () => {
     if (isEmailValid && isPasswordValid) {
       setIsLoading(true);
       try {
-        const isLoggedIn = await login(email, password);
-        if (!isLoggedIn) {
-          setEmailError("Invalid email or password");
-          setPasswordError("Invalid email or password");
+        const { success, errorMessage } = await login(email, password);
+
+        if (!success) {
+          let combinedErrorMessage = "";
+
+          // Combine error messages if both occur
+          if (errorMessage.includes("Your email is not verified")) {
+            combinedErrorMessage += "Your email is not verified. Please check your email for the verification link.\n";
+          }
+          if (errorMessage.includes("Your account is not verified by the admin")) {
+            combinedErrorMessage += "Your account is not verified by the admin.\n";
+          }
+
+          if (combinedErrorMessage) {
+            setErrorMessage(combinedErrorMessage); // Set both errors
+          } else {
+            setEmailError("Invalid email or password");
+            setPasswordError("Invalid email or password");
+          }
         }
       } catch (error) {
         console.error("An error occurred during login:", error);
-        setEmailError("An unexpected error occurred. Please try again later.");
-        setPasswordError(
-          "An unexpected error occurred. Please try again later."
-        );
+        setEmailError("An unexpected error occurred.");
+        setPasswordError("An unexpected error occurred.");
       } finally {
         setIsLoading(false);
       }
     }
+  };
+
+  // Dialog handling
+  const handleCloseErrorDialog = () => {
+    setErrorMessage(""); // Reset error state
   };
 
   return (
@@ -110,7 +141,7 @@ const LoginForm = () => {
           <TextField
             fullWidth
             label="Password"
-            type="password"
+            type={showPassword ? "text" : "password"} // Toggle type based on state
             variant="outlined"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -118,6 +149,18 @@ const LoginForm = () => {
             error={Boolean(passwordError)}
             helperText={passwordError}
             disabled={isLoading}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
         </div>
 
@@ -152,6 +195,24 @@ const LoginForm = () => {
           </Link>
         </p>
       </div>
+
+      {/* Error Dialog for email not verified or account not verified */}
+      <Dialog
+        open={Boolean(errorMessage)} // Show dialog only if errorMessage exists
+        onClose={handleCloseErrorDialog}
+        aria-labelledby="error-dialog-title"
+        aria-describedby="error-dialog-description"
+      >
+        <DialogTitle id="error-dialog-title">Verification Required</DialogTitle>
+        <DialogContent>
+          <p id="error-dialog-description">{errorMessage || "An unexpected error occurred."}</p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseErrorDialog} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

@@ -7,13 +7,21 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $guarded = ['id'];
-    protected $fillable = ['username', 'email', 'password', 'role_id', 'verified'];
+    protected $fillable = ['username', 'email', 'password', 'role_id', 'verified', 'email_verified_at'];
+
+    // In your User model (App\Models\User.php)
+        public function hasVerifiedEmail()
+        {
+            return $this->email_verified === 1; // or just check if it's truthy
+        }
+
 
     public function createRegister(array $task)
     {
@@ -113,4 +121,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(BalanceRequest::class);
     }
+    public function ratings()
+    {
+        return $this->hasMany(Rating::class, 'user_id'); // Assuming 'user_id' is the foreign key in the ratings table
+    }
+
 }

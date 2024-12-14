@@ -14,19 +14,19 @@ import { Search as SearchIcon } from '@mui/icons-material';
 import { InputBase } from '@mui/material';
 import NotificationsDropdown from '../components/NotificationsDropDown';
 import Avatar from '@mui/material/Avatar';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import SearchBar from '../../../views/searchbar';
 import PostSearchBar from '../../../views/PostsSearchBar';
 
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatIcon from '@mui/icons-material/Chat';
 import BrushIcon from '@mui/icons-material/Brush';
 import PrintIcon from '@mui/icons-material/Print';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import MapIcon from '@mui/icons-material/Map';
-import HomeIcon from '@mui/icons-material/Home';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 interface HeaderProps {
   onLocationSelect?: (location: any) => void;
@@ -34,20 +34,14 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onLocationSelect, onPostSearchSelect }) => {
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false); // Sidebar starts collapsed
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // const handleSearch = (query: string) => {
-  //   setSearchQuery(query); // Update search query state
-  //   if (onPostSearchSelect) {
-  //     onPostSearchSelect(query); // Pass query to parent or other components
-  //   }
-  // };
-  
   const toggleSidebar = () => {
-    setIsSidebarExpanded(!isSidebarExpanded); // Toggle sidebar state
+    setIsSidebarExpanded(!isSidebarExpanded);
   };
 
   const handleLogout = async () => {
@@ -60,23 +54,23 @@ const Header: React.FC<HeaderProps> = ({ onLocationSelect, onPostSearchSelect })
   };
 
   const isUserRole = () => {
-    return user && (user.role.rolename === 'User' );
+    return user && (user.role.rolename === 'User');
   };
   const isAdminRole = () => {
-    return user && (user.role.rolename === 'Admin' );
+    return user && (user.role.rolename === 'Admin');
   };
   const isDesingerOrProviderRole = () => {
     return user && (user.role.rolename === 'Printing Shop' || user.role.rolename === 'Graphic Designer');
   };
   const isMultipleRole = () => {
-    return user && (user.role.rolename === 'Printing Shop' || user.role.rolename === 'Graphic Designer'  || user.role.rolename === 'User');
+    return user && (user.role.rolename === 'Printing Shop' || user.role.rolename === 'Graphic Designer' || user.role.rolename === 'User');
   };
 
   return (
     <>
       {/* AppBar */}
       <AppBar position="fixed" color="inherit" elevation={1} sx={{ backgroundColor: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 1, sm: 2 } }}>
           <IconButton
             edge="start"
             aria-label="menu"
@@ -87,40 +81,44 @@ const Header: React.FC<HeaderProps> = ({ onLocationSelect, onPostSearchSelect })
           </IconButton>
 
           <Box display="flex" alignItems="center" sx={{ flexGrow: 2 }}>
-            <div className="text-black font-extrabold text-3xl ml-2">
+            <Box 
+              className="text-black font-extrabold" 
+              sx={{ 
+                fontSize: { xs: '1.5rem', sm: '2rem', md: '3rem' }, // Responsive font sizes
+                ml: { xs: 1, sm: 2 } // Responsive margin
+              }}
+            >
               <span className="text-blue-500">C</span>
               <span className="text-blue-500">u</span>
               <span className="text-blue-500">s</span>
               <span className="text-yellow-500">t</span>
               <span className="text-blue-500">M</span>
               <span className="text-yellow-500">e</span>
-            </div>
+            </Box>
           </Box>
-
-           {/* Replace the original search bar code with the imported SearchBar component */}
-           {window.location.href === "http://127.0.0.1:8000/getlocation" && (
-          <SearchBar onLocationSelect={onLocationSelect} />
+          {/* Replace the original search bar code with the imported SearchBar component */}
+          {window.location.href === "http://127.0.0.1:8000/getlocation" && (
+            <SearchBar onLocationSelect={onLocationSelect} />
           )}
-          
+
           {(location.pathname === '/dashboard' || location.pathname === '/designerpost' || location.pathname === '/providerpost') && (
-      <PostSearchBar onPostSelect={onPostSearchSelect} />
-        )}
+            <PostSearchBar onPostSelect={onPostSearchSelect} />
+          )}
 
           <Box display="flex" alignItems="center" sx={{ ml: 'auto' }}>
             <NotificationsDropdown />
 
             {user && (
-               <Box ml={2}>
-               <NavLink to={`/clients/${user.id}/profile`}>
-                 <Avatar
-                   src={`http://127.0.0.1:8000/storage/${user.personal_information?.profilepicture || 'images/default-profile.png'}`}
-                   alt="Profile"
-                   sx={{ width: 40, height: 40 }}
-                 />
-               </NavLink>
-             </Box>
-            
-            )}
+              <Box ml={2}>
+                <NavLink to={`/clients/${user.id}/profile`}>
+                  <Avatar
+                    src={`http://127.0.0.1:8000/storage/${user.personal_information?.profilepicture || 'images/default-profile.png'}`}
+                    alt="Profile"
+                    sx={{ width: 40, height: 40 }}
+                  />
+                </NavLink>
+              </Box>
+            )} 
           </Box>
         </Toolbar>
       </AppBar>
@@ -129,10 +127,10 @@ const Header: React.FC<HeaderProps> = ({ onLocationSelect, onPostSearchSelect })
       <Drawer
         anchor="left"
         open={isSidebarExpanded}
-        variant="temporary"  // Overlay variant for sidebar
-        onClose={toggleSidebar}  // Sidebar will close on clicking outside
+        variant="temporary"
+        onClose={toggleSidebar}
         ModalProps={{
-          keepMounted: true,  // Improves performance by not unmounting
+          keepMounted: true,
         }}
         sx={{
           width: isSidebarExpanded ? 240 : 60,
@@ -143,10 +141,10 @@ const Header: React.FC<HeaderProps> = ({ onLocationSelect, onPostSearchSelect })
             color: 'white',
             transition: 'width 0.3s ease',
             overflowX: 'hidden',
-            border: 'none', // Remove any unwanted borders
-            padding: 0,     // Ensure no padding is applied
-            margin: 0,      // Remove any margin applied
-            boxShadow: 'none', // Ensure no shadow or lines
+            border: 'none',
+            padding: 0,
+            margin: 0,
+            boxShadow: 'none',
           },
         }}
       >
@@ -168,7 +166,7 @@ const Header: React.FC<HeaderProps> = ({ onLocationSelect, onPostSearchSelect })
                   transition: 'width 0.3s ease, height 0.3s ease',
                 }}
               /> */}
-              {isSidebarExpanded && (
+              {/* {isSidebarExpanded && (
                 <NavLink
                   to={`/clients/${user.id}/profile`}
                   className="text-white text-sm hover:underline"
@@ -176,145 +174,130 @@ const Header: React.FC<HeaderProps> = ({ onLocationSelect, onPostSearchSelect })
                 >
                   {user.username}
                 </NavLink>
-              )}
+              )} */}
             </Box>
           )}
-                <NavLink to="/user" className="text-white">
-          <ListItem>
-            <ListItemIcon sx={{ color: 'white' }}>
-              <HomeIcon />
-            </ListItemIcon>
-            {isSidebarExpanded && <ListItemText primary="Home" />}
-          </ListItem>
-        </NavLink>
+
           {/* List of Icons */}
           <List sx={{ mt: 3 }}>
-            {/* Dashboard */}
-            {/* <NavLink to="/List-of-Desinger&Printing-Provider" className="text-white">
+            {isUserRole() && (
+              <NavLink to="/dashboard" className="text-white">
+                <ListItem>
+                  <ListItemIcon sx={{ color: 'white' }}>
+                    <DashboardIcon />
+                  </ListItemIcon>
+                  {isSidebarExpanded && <ListItemText primary="Dashboard" />}
+                </ListItem>
+              </NavLink>
+            )}
+               {isDesingerOrProviderRole() && (  
+            <NavLink to="/user" className="text-white">
               <ListItem>
                 <ListItemIcon sx={{ color: 'white' }}>
-                  <DashboardIcon />
+                  <DescriptionIcon />
                 </ListItemIcon>
-                {isSidebarExpanded && <ListItemText primary="Dashboard" />}
-              </ListItem>
-            </NavLink> */}
-          {isUserRole() && (  
-            <NavLink to="/dashboard" className="text-white">
-              <ListItem>
-                <ListItemIcon sx={{ color: 'white' }}>
-                  <DashboardIcon />
-                </ListItemIcon>
-                {isSidebarExpanded && <ListItemText primary="Dashboard" />}
+                {isSidebarExpanded && <ListItemText primary="My Post" />}
               </ListItem>
             </NavLink>
-              )}
+                  )}
 
-        {isMultipleRole() && (   
-           <NavLink to="/paymentstable" className="text-white">
-              <ListItem>
-                <ListItemIcon sx={{ color: 'white' }}>
-                  <FavoriteIcon />
-                </ListItemIcon>
-                {isSidebarExpanded && <ListItemText primary="Transaction" />}
-              </ListItem>
-            </NavLink>
-          )}
-        
-        {isMultipleRole() && (     
-            <NavLink to="/chats" className="text-white">
-              <ListItem>
-                <ListItemIcon sx={{ color: 'white' }}>
-                  <ChatIcon />
-                </ListItemIcon>
-                {isSidebarExpanded && <ListItemText primary="Chat" />}
-              </ListItem>
-            </NavLink>
-               )}
+    {isAdminRole() && (  
+                <NavLink to="/admin" className="text-white">
+                  <ListItem>
+                    <ListItemIcon sx={{ color: 'white' }}>
+                      <DescriptionIcon />
+                    </ListItemIcon>
+                    {isSidebarExpanded && <ListItemText primary="Reports" />}
+                  </ListItem>
+                </NavLink>
+      )}
+            {isMultipleRole() && (
+              <NavLink to="/paymentstable" className="text-white">
+                <ListItem>
+                  <ListItemIcon sx={{ color: 'white' }}>
+                    <AttachMoneyIcon />
+                  </ListItemIcon>
+                  {isSidebarExpanded && <ListItemText primary="Transaction" />}
+                </ListItem>
+              </NavLink>
+            )}
 
-        
-      {isDesingerOrProviderRole () && (   
-            <NavLink to="/clientpost" className="text-white">
-              <ListItem>
-                <ListItemIcon sx={{ color: 'white' }}>
-                  <BrushIcon />
-                </ListItemIcon>
-                {isSidebarExpanded && <ListItemText primary="Clients" />}
-              </ListItem>
-            </NavLink>
-          )}
-            {/* Print Shop
-            <NavLink to="/allposts" className="text-white">
-              <ListItem>
-                <ListItemIcon sx={{ color: 'white' }}>
-                  <PrintIcon />
-                </ListItemIcon>
-                {isSidebarExpanded && <ListItemText primary="Allposts" />}
-              </ListItem>
-            </NavLink> */}
+            {isMultipleRole() && (
+              <NavLink to="/chats" className="text-white">
+                <ListItem>
+                  <ListItemIcon sx={{ color: 'white' }}>
+                    <ChatIcon />
+                  </ListItemIcon>
+                  {isSidebarExpanded && <ListItemText primary="Chat" />}
+                </ListItem>
+              </NavLink>
+            )}
 
-            {/* My Purchase */}
-            {/* <NavLink to="/providerpost" className="text-white">
-              <ListItem>
-                <ListItemIcon sx={{ color: 'white' }}>
-                  <ShoppingCartIcon />
-                </ListItemIcon>
-                {isSidebarExpanded && <ListItemText primary="Provider" />}
-              </ListItem>
-            </NavLink>
-            <NavLink to="/designerpost" className="text-white">
-              <ListItem>
-                <ListItemIcon sx={{ color: 'white' }}>
-                  <ShoppingCartIcon />
-                </ListItemIcon>
-                {isSidebarExpanded && <ListItemText primary="Designer" />}
-              </ListItem>
-            </NavLink> */}
+            {isDesingerOrProviderRole() && (
+              <NavLink to="/clientpost" className="text-white">
+                <ListItem>
+                  <ListItemIcon sx={{ color: 'white' }}>
+                    <BrushIcon />
+                  </ListItemIcon>
+                  {isSidebarExpanded && <ListItemText primary="Clients Post" />}
+                </ListItem>
+              </NavLink>
+            )}
 
-        
-        
-{isMultipleRole () && (  
-            <NavLink to="/posts" className="text-white">
-              <ListItem>
-                <ListItemIcon sx={{ color: 'white' }}>
-                  <FaPlus />
-                </ListItemIcon>
-                {isSidebarExpanded && <ListItemText primary="Add Post" />}
-              </ListItem>
-            </NavLink>
-               )}
+            {isMultipleRole() && (
+              <NavLink to="/posts" className="text-white">
+                <ListItem>
+                  <ListItemIcon sx={{ color: 'white' }}>
+                    <FaPlus />
+                  </ListItemIcon>
+                  {isSidebarExpanded && <ListItemText primary="Add Post" />}
+                </ListItem>
+              </NavLink>
+            )}
           </List>
 
-      {isUserRole() && (         
+          {isUserRole() && (
             <NavLink to="/getlocation" className="text-white">
-            <ListItem>
-              <ListItemIcon sx={{ color: 'white' }}>
-                <MapIcon />
-              </ListItemIcon>
-              {isSidebarExpanded && <ListItemText primary="Nearby" />}
-            </ListItem>
-          </NavLink>
+              <ListItem>
+                <ListItemIcon sx={{ color: 'white' }}>
+                  <MapIcon />
+                </ListItemIcon>
+                {isSidebarExpanded && <ListItemText primary="Nearby" />}
+              </ListItem>
+            </NavLink>
           )}
 
-      {isDesingerOrProviderRole() && (         
-                  <NavLink to="/share-location" className="text-white">
-                  <ListItem>
-                    <ListItemIcon sx={{ color: 'white' }}>
-                      <MapIcon />
-                    </ListItemIcon>
-                    {isSidebarExpanded && <ListItemText primary="Add location" />}
-                  </ListItem>
-                </NavLink>
-                )}
-                {isAdminRole() && (         
-                  <NavLink to="/users" className="text-white">
-                  <ListItem>
-                    <ListItemIcon sx={{ color: 'white' }}>
-                      <MapIcon />
-                    </ListItemIcon>
-                    {isSidebarExpanded && <ListItemText primary="User List" />}
-                  </ListItem>
-                </NavLink>
-                )}
+      {isUserRole() && (
+            <NavLink to="/meet-the-team" className="text-white">
+              <ListItem>
+                <ListItemIcon sx={{ color: 'white' }}>
+                  <MapIcon />
+                </ListItemIcon>
+                {isSidebarExpanded && <ListItemText primary="Designer&Provider" />}
+              </ListItem>
+            </NavLink>
+          )}
+
+          {isDesingerOrProviderRole() && (
+            <NavLink to="/share-location" className="text-white">
+              <ListItem>
+                <ListItemIcon sx={{ color: 'white' }}>
+                  <MapIcon />
+                </ListItemIcon>
+                {isSidebarExpanded && <ListItemText primary="Add location" />}
+              </ListItem>
+            </NavLink>
+          )}
+          {isAdminRole() && (
+            <NavLink to="/users" className="text-white">
+              <ListItem>
+                <ListItemIcon sx={{ color: 'white' }}>
+                  <MapIcon />
+                </ListItemIcon>
+                {isSidebarExpanded && <ListItemText primary="User List" />}
+              </ListItem>
+            </NavLink>
+          )}
 
           {/* Logout */}
           <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'center' }}>

@@ -26,41 +26,63 @@ class ChatController extends Controller
 
 
     public function getUserChatList(Request $request)
-    {
-        $userId = Auth::id();
+{
+    $userId = Auth::id();
 
-        // Get all unique user IDs the current user has chatted with
-        $chattedUserIds = Chat::where('sender_id', $userId)
-            ->pluck('receiver_id') // Get the IDs of users the current user sent messages to
-            ->merge(Chat::where('receiver_id', $userId)->pluck('sender_id')) // Get the IDs of users who sent messages to the current user
-            ->unique(); // Ensure the IDs are unique
+    // Get all unique user IDs the current user has chatted with
+    $chattedUserIds = Chat::where('sender_id', $userId)
+        ->pluck('receiver_id') // Get the IDs of users the current user sent messages to
+        ->merge(Chat::where('receiver_id', $userId)->pluck('sender_id')) // Get the IDs of users who sent messages to the current user
+        ->unique(); // Ensure the IDs are unique
 
-        // Fetch the user details for all the unique IDs
-        $users = User::whereIn('id', $chattedUserIds)->get();
+    // Fetch the user details for all the unique IDs along with their personal information
+    $users = User::with('personalInformation') // Eager load personal information
+        ->whereIn('id', $chattedUserIds)
+        ->get();
 
-        return response()->json($users);
-    }
+    return response()->json($users);
+}
+public function sendMessage(Request $request)
+{
+$request->validate([
+'content' => 'nullable|string',
+'receiver_id' => 'required|exists:users,id',
+'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+]);
 
-    public function sendMessage(Request $request)
-    {
-        $request->validate([
-            'content' => 'required|string',
-            'receiver_id' => 'required|exists:users,id',
-        ]);
+$startTime = microtime(true); // Start time
 
-        $startTime = microtime(true); // Start time
-        $chat = Chat::create([
-            'content' => $request->input('content'),
-            'sender_id' => Auth::id(),
-            'receiver_id' => $request->input('receiver_id'),
-        ]);
+// Initialize file path
+$filePath = null;
 
-        // Broadcast the message event
-        broadcast(new MessageSent($chat))->toOthers();
+// Handle file upload if present
+if ($request->hasFile('file')) {
+    $filePath = $request->file('file')->store('uploads', 'public');
+}
 
-        $endTime = microtime(true); // End time
-        Log::info('Message sent on: ' . (($endTime - $startTime) * 1000) . ' ms'); // Log the time taken
+// Check if content and file are both provided
+if ($request->filled('content') && $filePath) {
+    return response()->json(['error' => 'You cannot send a message with both text and a file.'], 400);
+}
 
-        return response()->json($chat, 201);
-    }
+try {
+    $chat = Chat::create([
+        'content' => $request->input('content'),
+        'file_path' => $filePath,
+        'sender_id' => Auth::id(),
+        'receiver_id' => $request->input('receiver_id'),
+    ]);
+
+    // Broadcast the message event
+    broadcast(new MessageSent($chat))->toOthers();
+
+    $endTime = microtime(true); // End time
+    Log::info('Message sent on: ' . (($endTime - $startTime) * 1000) . ' ms'); // Log the time taken
+
+    return response()->json($chat, 201);
+} catch (\Exception $e) {
+    Log::error('Error sending message: ' . $e->getMessage());
+    return response()->json(['error' => 'An error occurred while sending the message.'], 500);
+}
+}
 }

@@ -12,7 +12,6 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 
-
 const HomePage = () => {
   const navigate = useNavigate();
 
@@ -114,57 +113,56 @@ const HomePage = () => {
             </p>
           </div>
         </div>
-      </section>
-      
+
         {/* Services Section */}
         <div id="services" className="min-h-screen flex flex-col items-center rounded-lg justify-center bg-white">
-        <h2 className="text-4xl font-bold mb-8">CustMe Services</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 w-20 md:w-auto">
-          <ServiceCard
-            title="Design Services"
-            description="Connect with freelance designers to create unique, personalized designs tailored to your needs."
-            buttonText="Explore Design Services"
-            imageUrl="https://i.pinimg.com/originals/e5/29/ae/e529ae5785e684063b0ecf58137078b6.png"
-          />
-          <ServiceCard
-            title="Printing Services"
-            description="Access a wide range of high-quality printing options to bring your designs to life, from digital prints to eco-friendly solutions."
-            buttonText="Explore Printing Options"
-            imageUrl="https://image.freepik.com/free-vector/digital-printing-concept-illustration_23-2148470662.jpg"
-          />
+          <h2 className="text-4xl font-bold mb-8">CustMe Services</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 w-20 md:w-auto">
+            <ServiceCard
+              title="Design Services"
+              description="Connect with freelance designers to create unique, personalized designs tailored to your needs."
+              buttonText="Explore Design Services"
+              imageUrl="https://i.pinimg.com/originals/e5/29/ae/e529ae5785e684063b0ecf58137078b6.png"
+            />
+            <ServiceCard
+              title="Printing Services"
+              description="Access a wide range of high-quality printing options to bring your designs to life, from digital prints to eco-friendly solutions."
+              buttonText="Explore Printing Options"
+              imageUrl="https://image.freepik.com/free-vector/digital-printing-concept-illustration_23-2148470662.jpg"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Simple Footer */}
-      <footer className="bg-gray-100 py-4 border-t border-gray-200">
-    <div className="max-w-6xl mx-auto flex justify-between items-center px-4">
-      
-      {/* Left side: Logo and Copyright */}
-      <div className="flex items-center space-x-2">
-        <h1 className="text-3xl font-bold text-gray-600 pr-6">CustMe</h1>
-        <span className="text-gray-600 text-sm">© Copyright CustMe 2024. All rights reserved</span>
-      </div>
+        {/* Simple Footer */}
+        <footer className="bg-gray-100 py-4 border-t border-gray-200">
+          <div className="max-w-6xl mx-auto flex justify-between items-center px-4">
+            {/* Left side: Logo and Copyright */}
+            <div className="flex items-center space-x-2">
+              <h1 className="text-3xl font-bold text-gray-600 pr-6">CustMe</h1>
+              <span className="text-gray-600 text-sm">© Copyright CustMe 2024. All rights reserved</span>
+            </div>
 
-      {/* Middle: Social Icons */}
-      <div className="flex space-x-4">
-        <a href="https://instagram.com" className="text-gray-500 hover:text-gray-800">
-          <InstagramIcon />
-        </a>
-        <a href="https://linkedin.com" className="text-gray-500 hover:text-gray-800">
-          <LinkedInIcon />
-        </a>
-        <a href="https://facebook.com" className="text-gray-500 hover:text-gray-800">
-          <FacebookIcon />
-        </a>
-        <a href="https://pinterest.com" className="text-gray-500 hover:text-gray-800">
-          <PinterestIcon />
-        </a>
-        <a href="https://twitter.com" className="text-gray-500 hover:text-gray-800">
-          <TwitterIcon />
-        </a>
-      </div>
-    </div>
-  </footer>
+            {/* Middle: Social Icons */}
+            <div className="flex space-x-4">
+              <a href="https://instagram.com" className="text-gray-500 hover:text-gray-800">
+                <InstagramIcon />
+              </a>
+              <a href="https://linkedin.com" className="text-gray-500 hover:text-gray-800">
+                <LinkedInIcon />
+              </a>
+              <a href="https://facebook.com" className="text-gray-500 hover:text-gray-800">
+                <FacebookIcon />
+              </a>
+              <a href="https://pinterest.com" className="text-gray-500 hover:text-gray-800">
+                <PinterestIcon />
+              </a>
+              <a href="https://twitter.com" className="text-gray-500 hover:text-gray-800">
+                <TwitterIcon />
+              </a>
+            </div>
+          </div>
+        </footer>
+      </section>
     </div>
   );
 };

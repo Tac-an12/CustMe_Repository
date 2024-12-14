@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import Pusher from 'pusher-js';
 import apiService from '../services/apiService';
 
 export interface Message {
@@ -8,12 +7,25 @@ export interface Message {
   sender_id: number;
   receiver_id: number;
   created_at: string;
+  file_path?: string; // Add file_path to handle file uploads
+}
+
+export interface PersonalInformation {
+  id: number;
+  firstname: string;
+  lastname: string;
+  profilepicture: string;
+  coverphoto?: string;
+  zipcode?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: number;
 }
 
 export interface ChatUser {
   id: number;
   username: string;
-  profilepicture: string;
+  personal_information: PersonalInformation; // Nesting PersonalInformation
   online: boolean;
 }
 
@@ -22,7 +34,7 @@ interface ChatContextProps {
   userChatList: ChatUser[];
   fetchMessages: () => Promise<void>;
   fetchUserChatList: () => Promise<void>;
-  sendMessage: (content: string, receiverId: number) => Promise<boolean>;
+  sendMessage: (content: string, receiverId: number, file?: File) => Promise<boolean>; // Updated to include a file
   loading: boolean;
 }
 
@@ -35,23 +47,7 @@ interface ChatProviderProps {
 export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userChatList, setUserChatList] = useState<ChatUser[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  // Initialize Pusher and subscribe to the public channel
-  useEffect(() => {
-    const pusher = new Pusher('087ae63043c8feb92728', {
-      cluster: 'ap1',
-    });
-
-    const channel = pusher.subscribe('public-chat-channel'); // Use a public channel name
-    channel.bind('message.sent', (data: { chat: Message }) => {
-      setMessages((prevMessages) => [...prevMessages, data.chat]);
-    });
-
-    return () => {
-      pusher.unsubscribe('public-chat-channel');
-    };
-  }, []);
+  const [loading, setLoading] = useState<boolean>(true); // Set loading to true initially
 
   const fetchMessages = async (): Promise<void> => {
     setLoading(true);
@@ -59,7 +55,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const response = await apiService.get('/chats', {
         withCredentials: true,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Add Bearer token here
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       setMessages(response.data);
@@ -76,7 +72,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const response = await apiService.get('/user-chat-list', {
         withCredentials: true,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Add Bearer token here
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       setUserChatList(response.data);
@@ -87,15 +83,21 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
   };
 
-  const sendMessage = async (content: string, receiverId: number): Promise<boolean> => {
+  const sendMessage = async (content: string, receiverId: number, file?: File): Promise<boolean> => {
+    const formData = new FormData();
+    if (content) formData.append('content', content);
+    formData.append('receiver_id', receiverId.toString());
+    if (file) formData.append('file', file); // Append file if present
+
     try {
       const response = await apiService.post(
         '/send-message',
-        { content, receiver_id: receiverId },
+        formData,
         {
           withCredentials: true,
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Add Bearer token here
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            'Content-Type': 'multipart/form-data', // Set content type for file upload
           }
         }
       );
@@ -107,10 +109,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
   };
 
-  // Fetch messages and user chat list on component mount
   useEffect(() => {
-    fetchMessages();
-    fetchUserChatList();
+    const fetchData = async () => {
+      await Promise.all([fetchMessages(), fetchUserChatList()]);
+    };
+    fetchData();
   }, []);
 
   return (

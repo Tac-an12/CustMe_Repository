@@ -114,21 +114,21 @@ export const ClientProfileProvider: React.FC<ClientProfileProviderProps> = ({
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const fetchProfile = async (userId: number) => {
-    if (loading || (profile && profile.id === userId)) {
+  const fetchProfile = async (userId: number, forceRefresh = false) => {
+    if (loading || (!forceRefresh && profile && profile.id === userId)) {
       console.log(
         "Profile already loaded or loading in progress, skipping fetch."
       );
       return;
     }
-
+  
     setLoading(true);
     console.log(`Fetching profile for user ID: ${userId}`);
-
+  
     try {
       const response = await apiService.get(`/users/${userId}/profile`);
       console.log("Profile fetched:", response.data);
-
+  
       const userProfile: UserProfile = {
         id: response.data.user.id,
         username: response.data.user.username,
@@ -142,7 +142,7 @@ export const ClientProfileProvider: React.FC<ClientProfileProviderProps> = ({
         printing_skills: response.data.user.printing_skills,
         user_skills: response.data.user.user_skills || [],
       };
-
+  
       setProfile(userProfile);
     } catch (error) {
       console.error("Error fetching client profile:", error);
@@ -150,6 +150,7 @@ export const ClientProfileProvider: React.FC<ClientProfileProviderProps> = ({
       setLoading(false);
     }
   };
+  
 
   const updateProfile = async (
     userId: number,
@@ -180,7 +181,11 @@ export const ClientProfileProvider: React.FC<ClientProfileProviderProps> = ({
       );
       if (response.status === 200) {
         console.log("Profile successfully updated on server.");
-        await fetchProfile(userId); // Refetch profile to update with latest data
+        try {
+          await fetchProfile(userId, true); // Force refetch after update
+        } catch (refetchError) {
+          console.error("Error refetching profile after update:", refetchError);
+        }
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -205,7 +210,11 @@ export const ClientProfileProvider: React.FC<ClientProfileProviderProps> = ({
 
       if (response.status === 200) {
         console.log("Bio and skills updated successfully.");
-        await fetchProfile(userId); // Refresh profile with latest data
+        try {
+          await fetchProfile(userId, true); // Force refetch after update
+        } catch (refetchError) {
+          console.error("Error refetching profile after update:", refetchError);
+        }
       }
     } catch (error) {
       console.error("Error updating bio and skills:", error);

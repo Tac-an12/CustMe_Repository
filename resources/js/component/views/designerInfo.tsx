@@ -11,7 +11,7 @@ type Skill = {
 const DesignerInformationPage = () => {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [bio, setBio] = useState<string>("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]); // Changed to an array to hold multiple files
   const [skillsList, setSkillsList] = useState<Skill[]>([]);
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -31,14 +31,14 @@ const DesignerInformationPage = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFile(e.target.files[0]);
+      setFiles(prevFiles => [...prevFiles, ...Array.from(e.target.files)]);
     }
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files) {
-      setFile(e.dataTransfer.files[0]);
+      setFiles(prevFiles => [...prevFiles, ...Array.from(e.dataTransfer.files)]);
     }
   };
 
@@ -50,7 +50,7 @@ const DesignerInformationPage = () => {
     e.preventDefault();
 
     // Check if all required fields are completed
-    if (!roleId || skills.length === 0 || !bio || !file) {
+    if (!roleId || skills.length === 0 || !bio || files.length === 0) {
       alert("Please complete all required fields.");
       return;
     }
@@ -59,14 +59,14 @@ const DesignerInformationPage = () => {
     console.log("Role ID:", roleId);
     console.log("Selected Skills:", skills);
     console.log("Bio:", bio);
-    console.log("Portfolio File:", file ? file.name : "No file selected");
+    console.log("Selected Portfolio Files:", files.map(file => file.name).join(", "));
 
     navigate("/register", {
       state: {
         roleId,
         skills: skills.map((skill) => skill.skill_id),
         bio,
-        portfolioFile: file,
+        portfolioFiles: files, // Pass multiple files here
       },
     });
   };
@@ -124,10 +124,16 @@ const DesignerInformationPage = () => {
               onChange={handleFileChange}
               className="hidden"
               accept=".pdf, .jpg, .jpeg, .png" // Allow only specific file types
+              multiple // Allow multiple files
             />
-            {file && (
+            {files.length > 0 && (
               <div className="mt-2">
-                <p className="text-gray-700 text-sm">Selected File: {file.name}</p>
+                <p className="text-gray-700 text-sm">Selected Files:</p>
+                <ul className="list-disc pl-5">
+                  {files.map((file, index) => (
+                    <li key={index} className="text-gray-700 text-sm">{file.name}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

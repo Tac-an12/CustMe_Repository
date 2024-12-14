@@ -118,4 +118,16 @@ class StoreController extends Controller
 
         return response()->json($stores);
     }
+    public function getUserStore($userId)
+{
+    // Fetch the user's store
+    $store = $this->storeModel->where('user_id', $userId)->with('location')->first();
+
+    if ($store) {
+        return response()->json(['exists' => true, 'store' => $store], 200);
+    }
+
+    return response()->json(['exists' => false, 'message' => 'No store found for this user.'], 200);
+}
+
 }

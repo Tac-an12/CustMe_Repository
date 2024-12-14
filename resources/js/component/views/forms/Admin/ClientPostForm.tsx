@@ -6,10 +6,13 @@ import Header from '../components/header';
 import RequestModal from '../../requestmore';
 import { useRequest } from '../../../context/RequestContext';
 import { useAuth } from '../../../context/AuthContext';
+import { useNavigate } from "react-router-dom";
 
 const PostCard = ({ post, onRequestSubmit }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const navigate = useNavigate(); 
+
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -25,6 +28,9 @@ const PostCard = ({ post, onRequestSubmit }) => {
 
   const handleNextImage = () => {
     setCurrentIndex((prevIndex) => (prevIndex < post.images.length - 1 ? prevIndex + 1 : 0));
+  };
+  const handleSendMessage = (userId) => {
+    navigate("/chats", { state: { userId } });
   };
 
   return (
@@ -90,6 +96,14 @@ const PostCard = ({ post, onRequestSubmit }) => {
 
       <Button variant="contained" color="warning" className="w-full" onClick={() => onRequestSubmit(post)}>
         Interested
+      </Button>
+      <Button 
+        variant="contained" 
+        color="primary" 
+        className="w-full -mt-10" 
+        onClick={() => handleSendMessage(post.user.user_id)}
+      >
+        Send Message
       </Button>
     </div>
   );

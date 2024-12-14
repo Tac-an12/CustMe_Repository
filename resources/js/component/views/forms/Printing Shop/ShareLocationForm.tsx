@@ -1,19 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../../context/StoreContext';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import Header from '../components/header';
 import { Button, TextField, Typography, Container, Paper, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
+const ClickableMap = ({ onClick }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    const handleClick = (event) => {
+      onClick(event);
+    };
+
+    map.on('click', handleClick);
+
+    return () => {
+      map.off('click', handleClick); // Clean up the event listener on unmount
+    };
+  }, [map, onClick]);
+
+  return null; // This component doesn't need to render anything
+};
+
 const ShareLocation = () => {
-  const { createStore, loading } = useStore();
+  const { createStore, fetchUserStores, updateStore, loading } = useStore();
   const [storename, setStorename] = useState('');
   const [description, setDescription] = useState('');
   const [longitude, setLongitude] = useState<number | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [address, setAddress] = useState('');
   const [showMap, setShowMap] = useState(false);
+  const [userStore, setUserStore] = useState<any>(null);
+  const [storesFetched, setStoresFetched] = useState(false);
+
+  useEffect(() => {
+    const getUserStore = async () => {
+      const response = await fetchUserStores();
+      if (response && response.exists) {
+        const store = response.store;
+        if (store) {
+          setUserStore(store);
+          setStorename(store.storename);
+          setDescription(store.description);
+          setLongitude(Number(store.location.longitude));
+          setLatitude(Number(store.location.latitude));
+          setAddress(store.location.address);
+        }
+      } else {
+        console.info('No user store exists for this user.');
+        setUserStore(null);
+      }
+      setStoresFetched(true);
+    };
+
+    if (!storesFetched) {
+      getUserStore();
+    }
+  }, [fetchUserStores, storesFetched]);
+
+  const handleMapClick = async (event: any) => {
+    const { lat, lng } = event.latlng;
+    setLatitude(lat);
+    setLongitude(lng);
+
+    // Call reverse geocoding API
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      );
+      const data = await response.json();
+      if (data && data.display_name) {
+        setAddress(data.display_name);
+      }
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      setAddress(''); // Default to empty if an error occurs
+    }
+  };
 
   const handleShareLocation = () => {
     if (navigator.geolocation) {
@@ -24,7 +89,7 @@ const ShareLocation = () => {
               const { latitude, longitude } = position.coords;
               setLatitude(latitude);
               setLongitude(longitude);
-  
+
               // Call reverse geocoding API
               try {
                 const response = await fetch(
@@ -32,13 +97,13 @@ const ShareLocation = () => {
                 );
                 const data = await response.json();
                 if (data && data.display_name) {
-                  setAddress(data.display_name); // Populate the address field
+                  setAddress(data.display_name);
                 }
               } catch (error) {
                 console.error('Error fetching address:', error);
-                setAddress(''); // Default to empty if an error occurs
+                setAddress('');
               }
-  
+
               setShowMap(true);
             },
             (error) => {
@@ -66,7 +131,7 @@ const ShareLocation = () => {
       alert('Geolocation is not supported by this browser.');
     }
   };
-  
+
   const handleRemoveMap = () => {
     setShowMap(false);
     setLatitude(null);
@@ -83,18 +148,30 @@ const ShareLocation = () => {
     }
 
     const location = { longitude, latitude, address };
-    const storeData = { storename, description, location };
+    const storeData = {
+      id: userStore ? userStore.id : null,
+      user_id: userStore ? userStore.user_id : null,
+      storename,
+      description,
+      location,
+    };
 
-    const success = await createStore(storeData);
-
-    if (success) {
-      alert('Store created successfully!');
-      setStorename('');
-      setDescription('');
-      setAddress('');
-      setShowMap(false);
+    if (userStore) {
+      const success = await updateStore(userStore.id, storeData);
+      if (success) {
+        alert('Store updated successfully!');
+      } else {
+        alert('Failed to update store.');
+      }
     } else {
-      alert('Failed to create store.');
+      const success = await createStore(storeData);
+      if (success) {
+        alert('Store created successfully!');
+        await fetchUserStores();
+        setShowMap(true);
+      } else {
+        alert('Failed to create store.');
+      }
     }
   };
 
@@ -103,7 +180,7 @@ const ShareLocation = () => {
       <Header />
       <Paper elevation={3} style={{ padding: '20px', marginTop: '20px' }}>
         <Typography variant="h5" align="center" gutterBottom>
-          Share Your Location
+          {userStore ? 'Edit Your Store' : 'Share Your Location'}
         </Typography>
         <Button variant="contained" color="primary" fullWidth onClick={handleShareLocation}>
           Share Location
@@ -128,6 +205,7 @@ const ShareLocation = () => {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
               <Marker position={[latitude, longitude]} />
+              <ClickableMap onClick={handleMapClick} /> {/* Add ClickableMap component */}
             </MapContainer>
           </div>
         )}
@@ -168,7 +246,7 @@ const ShareLocation = () => {
             fullWidth
             style={{ marginTop: '20px' }}
           >
-            {loading ? 'Creating...' : 'Create Store'}
+            {loading ? 'Saving...' : userStore ? 'Update Store' : 'Create Store'}
           </Button>
         </form>
       </Paper>

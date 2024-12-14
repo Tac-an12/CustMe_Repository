@@ -45,21 +45,26 @@ const PaymentsTable = () => {
       </div>
     );
 
-  const handlePayment = async (requestId) => {
-    try {
-      const response = await apiService.post(`/payforproduct80/${requestId}`);
-      if (response.data && response.data.checkout_url) {
-        window.open(response.data.checkout_url, "_blank");
-      } else {
-        console.error(
-          "Failed to get checkout URL:",
-          response.data.error || "Unknown error"
-        );
+    const handlePayment = async (requestId) => {
+      try {
+        const response = await apiService.post(`/payforproduct80/${requestId}`);
+        if (response.data && response.data.checkout_url) {
+          // Open the checkout URL in a new tab
+          window.open(response.data.checkout_url, "_blank");
+    
+          // Re-fetch the payment requests to update the UI
+          await fetchRequestPayments();
+        } else {
+          console.error(
+            "Failed to get checkout URL:",
+            response.data.error || "Unknown error"
+          );
+        }
+      } catch (error) {
+        console.error("Error initiating payment:", error);
       }
-    } catch (error) {
-      console.error("Error initiating payment:", error);
-    }
-  };
+    };
+    
 
   return (
     <div>
@@ -123,7 +128,7 @@ const PaymentsTable = () => {
                     <TableCell>
                       {new Date(payment.created_at).toLocaleDateString()}
                     </TableCell>
-                    {user.role.rolename === "User" &&
+                    {user?.role.rolename === "User" &&
                       payment.status !== "completed" &&
                       payment.status !== "refunded" &&
                       payment.status !== "pending" && (

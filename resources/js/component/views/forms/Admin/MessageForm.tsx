@@ -3,7 +3,6 @@ import {
   Avatar,
   Badge,
   IconButton,
-  InputAdornment,
   List,
   ListItem,
   ListItemAvatar,
@@ -11,11 +10,12 @@ import {
   TextField,
   Container,
   Card,
+  CircularProgress,
+  Box,
 } from "@mui/material";
-import { Phone, VideoCall, MoreHoriz, Send, Search as SearchIcon } from "@mui/icons-material";
+import { Send, AttachFile } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useChat } from "../../../context/ChatContext";
-import { useUserProfile } from "../../../context/UserProfileContext";
 import { useAuth } from "../../../context/AuthContext";
 import Header from "../components/header";
 
@@ -24,20 +24,19 @@ const ChatForm: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { messages, sendMessage, userChatList, fetchMessages, fetchUserChatList } = useChat();
-  const { userProfile } = useUserProfile();
   const [currentMessage, setCurrentMessage] = useState<string>("");
   const [selectedChatUser, setSelectedChatUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
 
-  // Get the userId from location state
   const userId = location.state?.userId;
 
-  // Fetch chat messages and user list on mount
   useEffect(() => {
     fetchMessages();
     fetchUserChatList();
   }, [fetchMessages, fetchUserChatList]);
 
-  // Set selected chat user based on userId from location state or userChatList
   useEffect(() => {
     if (userId) {
       const foundUser = userChatList.find((chat) => chat.id === Number(userId));
@@ -49,26 +48,40 @@ const ChatForm: React.FC = () => {
     }
   }, [userId, userChatList]);
 
-  // Function to handle sending messages
+  useEffect(() => {
+    if (file) {
+      const fileReader = new FileReader();
+      fileReader.onloadend = () => {
+        setFilePreview(fileReader.result as string);
+      };
+      if (file.type.startsWith("image/")) {
+        fileReader.readAsDataURL(file);
+      } else {
+        setFilePreview(null); // No preview for non-image files
+      }
+    } else {
+      setFilePreview(null);
+    }
+  }, [file]);
+
   const handleSendMessage = async () => {
     const receiverId = selectedChatUser ? selectedChatUser.id : Number(userId);
-    if (currentMessage.trim() && receiverId) {
-      const success = await sendMessage(currentMessage, receiverId);
-      if (success) setCurrentMessage("");
+    if ((currentMessage.trim() || file) && receiverId) {
+      setLoading(true);
+      const success = await sendMessage(currentMessage, receiverId, file || undefined);
+      if (success) {
+        setCurrentMessage("");
+        setFile(null);
+        setFilePreview(null);
+      }
+      setLoading(false);
     }
   };
 
-  // Prepare user's profile picture URL
-  const personalInformation = userProfile?.personalInformation;
-  const profilePictureUrl = personalInformation?.profilepicture
-    ? `http://127.0.0.1:8000/${personalInformation.profilepicture}`
-    : null;
-
-  // Filter messages for the selected user
   const filteredMessages = messages.filter(
     (chat) =>
-      (chat.sender_id === selectedChatUser?.id && chat.receiver_id === user.id) ||
-      (chat.receiver_id === selectedChatUser?.id && chat.sender_id === user.id)
+      (chat.sender_id === selectedChatUser?.id && chat.receiver_id === user?.id) ||
+      (chat.receiver_id === selectedChatUser?.id && chat.sender_id === user?.id)
   );
 
   return (
@@ -77,21 +90,8 @@ const ChatForm: React.FC = () => {
       <Container maxWidth={false} className="p-0 h-full mt-16">
         <Card className="shadow-sm m-0 h-full w-full">
           <div className="grid grid-cols-12 gap-0 h-full">
+            {/* User List */}
             <div className="col-span-12 lg:col-span-5 xl:col-span-3 border-r h-full">
-              <div className="p-4 hidden md:block">
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  placeholder="Search..."
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </div>
               <List>
                 {userChatList.length > 0 ? (
                   userChatList.map((chat) => (
@@ -107,22 +107,13 @@ const ChatForm: React.FC = () => {
                       <ListItemAvatar>
                         <Badge color="success" variant="dot" invisible={!chat.online}>
                           <Avatar
-                            src={chat.avatar || "https://via.placeholder.com/40"}
+                            src={chat.personal_information?.profilepicture ? `http://127.0.0.1:8000/storage/${chat.personal_information.profilepicture}` : "https://via.placeholder.com/40"}
                             alt={chat.username || "User"}
                             className="rounded-full"
                           />
                         </Badge>
                       </ListItemAvatar>
-                      <ListItemText
-                        primary={chat.username || "User"}
-                        secondary={
-                          chat.online ? (
-                            <span className="text-green-500">Online</span>
-                          ) : (
-                            <span className="text-red-500">Offline</span>
-                          )
-                        }
-                      />
+                      <ListItemText primary={chat.username || "User"} />
                     </ListItem>
                   ))
                 ) : (
@@ -131,41 +122,22 @@ const ChatForm: React.FC = () => {
               </List>
             </div>
 
+            {/* Chat Area */}
             <div className="col-span-12 lg:col-span-7 xl:col-span-9 h-full">
               {selectedChatUser ? (
                 <div className="py-2 px-4 border-b hidden lg:block">
                   <div className="flex justify-between">
                     <div className="flex space-x-4">
-                      {profilePictureUrl ? (
-                        <Avatar
-                          src={profilePictureUrl}
-                          alt={`${personalInformation?.firstname} ${personalInformation?.lastname}`}
-                          className="w-16 h-16 rounded-full"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span></span>
-                        </div>
-                      )}
+                      <Avatar
+                        src={selectedChatUser?.personal_information?.profilepicture ? `http://127.0.0.1:8000/storage/${selectedChatUser.personal_information.profilepicture}` : "https://via.placeholder.com/40"}
+                        alt={selectedChatUser.username || "User"}
+                        className="w-16 h-16 rounded-full"
+                      />
                       <div className="leading-tight">
                         <div className="text-md">
                           {selectedChatUser.username || "Unknown"}
                         </div>
-                        <span className={selectedChatUser.online ? "text-green-500" : "text-red-500"}>
-                          {selectedChatUser.online ? "Online" : "Offline"}
-                        </span>
                       </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <IconButton>
-                        <Phone />
-                      </IconButton>
-                      <IconButton>
-                        <VideoCall />
-                      </IconButton>
-                      <IconButton>
-                        <MoreHoriz />
-                      </IconButton>
                     </div>
                   </div>
                 </div>
@@ -173,26 +145,22 @@ const ChatForm: React.FC = () => {
                 <p className="p-4">Select a user to start chatting.</p>
               )}
 
-              {/* Chat messages */}
-              <div
-                className="chat-messages p-4 flex-grow overflow-y-auto"
-                style={{
-                  height: "400px",
-                  overflowY: "auto",
-                }}
-              >
+              {/* Chat Messages */}
+              <div className="chat-messages p-4 flex-grow overflow-y-auto" style={{ height: "400px", overflowY: "auto" }}>
                 {filteredMessages.length > 0 ? (
                   filteredMessages.map((chat) => (
-                    <div
-                      key={chat.id}
-                      className={`flex ${chat.sender_id === user.id ? "justify-end" : "justify-start"} mb-2`}
-                    >
-                      <div
-                        className={`p-2 rounded-lg max-w-xs ${
-                          chat.sender_id === user.id ? "bg-blue-500 text-white" : "bg-gray-200"
-                        }`}
-                      >
-                        {chat.content}
+                    <div key={chat.id} className={`flex ${chat.sender_id === user?.id ? "justify-end" : "justify-start"} mb-2`}>
+                      <div className={`p-2 rounded-lg max-w-xs ${chat.sender_id === user?.id ? "bg-blue-500 text-white" : "bg-gray-200"}`}>
+                        {chat.content && <div>{chat.content}</div>}
+                        {chat.file_path && (
+                          chat.file_path.endsWith(".png") || chat.file_path.endsWith(".jpg") || chat.file_path.endsWith(".jpeg") ? (
+                            <img src={`http://127.0.0.1:8000/storage/${chat.file_path}`} alt="uploaded" style={{ width: '100%', borderRadius: '8px' }} />
+                          ) : (
+                            <a href={`http://127.0.0.1:8000/storage/${chat.file_path}`} download>
+                              {chat.file_path.split('/').pop()} {/* Display file name as clickable link */}
+                            </a>
+                          )
+                        )}
                       </div>
                     </div>
                   ))
@@ -201,7 +169,7 @@ const ChatForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Message input */}
+              {/* Message Input */}
               <div className="p-4 border-t flex items-center">
                 <TextField
                   variant="outlined"
@@ -209,9 +177,34 @@ const ChatForm: React.FC = () => {
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   className="flex-grow"
+                  InputProps={{
+                    endAdornment: (
+                      <IconButton component="label" color="primary">
+                        <AttachFile />
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                          onChange={(e) => {
+                            const files = e.target.files;
+                            setFile(files && files.length > 0 ? files[0] : null);
+                          }}
+                          hidden
+                        />
+                      </IconButton>
+                    ),
+                  }}
                 />
-                <IconButton onClick={handleSendMessage} disabled={!currentMessage.trim()}>
-                  <Send />
+                {file && (
+                  <Box className="ml-2 flex items-center">
+                    {file.type.startsWith("image/") ? (
+                      <img src={filePreview || ''} alt="preview" style={{ width: '40px', height: '40px', borderRadius: '4px' }} />
+                    ) : (
+                      <span>{file.name}</span> // Display file name for non-image files
+                    )}
+                  </Box>
+                )}
+                <IconButton onClick={handleSendMessage} disabled={!currentMessage.trim() && !file || loading}>
+                  {loading ? <CircularProgress size={24} /> : <Send />}
                 </IconButton>
               </div>
             </div>

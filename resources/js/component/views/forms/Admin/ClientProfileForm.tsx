@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useClientProfile } from "../../../context/ClientProfileContext";
 import { useAuth } from "../../../context/AuthContext";
 import {
@@ -23,6 +24,9 @@ import EditProfileModal from "../../forms/EditProfileForm";
 import Carousel from "react-material-ui-carousel";
 import AboutMe from "../../forms/Admin/AboutMe";
 import RatingSection from "../../forms/Admin/RatingSection"; // Import RatingSection
+import { IconButton } from "@mui/material"; // For the IconButton component
+import { Chat as ChatIcon } from "@mui/icons-material"; // For the Chat icon
+
 
 const ClientProfile = () => {
   const { id } = useParams<{ id: string | undefined }>();
@@ -31,6 +35,7 @@ const ClientProfile = () => {
   const { user } = useAuth();
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<number>(0);
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     if (userId) {
@@ -72,6 +77,9 @@ const ClientProfile = () => {
   const handleTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
     setSelectedTab(newValue);
   };
+  const handleSendMessage = (userId: number) => {
+    navigate("/chats", { state: { userId } });
+  };
 
   return (
     <>
@@ -112,6 +120,19 @@ const ClientProfile = () => {
                   {profile.personal_information?.zipcode || "N/A"}
                 </Typography>
               </div>
+              {!canEditProfile && (
+                <div className="flex justify-center mt-2">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleSendMessage(userId!)} // Use userId from params
+                    startIcon={<ChatIcon />}
+                    size="large"
+                  >
+                    Message
+                  </Button>
+                </div>
+              )}
 
               {/* Edit profile button */}
               {canEditProfile && (

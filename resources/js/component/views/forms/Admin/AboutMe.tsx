@@ -48,11 +48,11 @@ function AboutMe() {
     await updateProfile(profile.id, {
       aboutMe: updatedAboutMe,
       skills:
-        profile.role_name === "Graphic Designer"
+        profile?.role_name === "Graphic Designer"
           ? updatedSkills.map((skill) => skill.skill_name)
           : undefined,
       printingSkills:
-        profile.role_name === "Printing Shop"
+        profile?.role_name === "Printing Shop"
           ? updatedPrintingSkills.map((skill) => skill.printing_skill_name)
           : undefined,
     });
@@ -60,7 +60,7 @@ function AboutMe() {
     setTempData({
       aboutMe: updatedAboutMe,
       skills:
-        profile.role_name === "Graphic Designer"
+        profile?.role_name === "Graphic Designer"
           ? updatedSkills.map((skill) => skill.skill_name).join(", ")
           : updatedPrintingSkills
               .map((skill) => skill.printing_skill_name)

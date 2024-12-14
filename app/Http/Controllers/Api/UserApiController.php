@@ -8,6 +8,7 @@ use App\Models\PrintingSkill;
 use App\Models\Skill;
 use App\Models\AboutMe;
 use App\Models\UserCertificate;
+use App\Models\Rating;
 use App\Models\Portfolio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,9 @@ use App\Models\UserSkill;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Notifications\CustomVerifyEmail;
+use Illuminate\Support\Str;
+
 
 class UserApiController extends Controller
 {
@@ -43,29 +47,51 @@ class UserApiController extends Controller
 
     public function login(Request $request)
     {
+        // Validate incoming request to ensure 'email' and 'password' are provided
         $credentials = $request->only('email', 'password');
-
+        
+        Log::debug('Login attempt', ['email' => $credentials['email']]);
+    
+        // Attempt login with provided credentials
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-
-            if (!$user->verified) {
+    
+            Log::debug('User authenticated', ['user' => $user]);
+    
+            // Check if the user's email is verified
+            if ($user->email_verified_at != 1) {
+                Log::debug('Email verification failed', ['email_verified' => $user->email_verified]);
                 Auth::logout();
-                return response()->json(['error' => 'Your account is not verified.'], 403);
+                return response()->json(['error' => 'Your email is not verified. Please check your email for the verification link.'], 403);
             }
-
+    
+            // Check for other custom verification (e.g., admin approval)
+            if (!$user->verified) {
+                Log::debug('Custom verification failed', ['verified' => $user->verified]);
+                Auth::logout();
+                return response()->json(['error' => 'Your account is not verified by the admin.'], 403);
+            }
+    
+            // If both email and custom verification passed, generate an API token
             $token = $user->createToken('auth_token')->plainTextToken;
-
+            Log::debug('Generated token', ['token' => $token]);
+    
             // Eager load the role relationship
             $user->load('role');
-
-            // Debugging: Log the user and role data
+            Log::debug('User role loaded', ['role' => $user->role]);
+    
+            // Log user and role data for debugging purposes
             Log::info('User logged in:', ['user' => $user, 'role' => $user->role, 'token' => $token]);
-
+    
+            // Respond with the user data, token, and a success message
             return response()->json(['user' => $user, 'token' => $token, 'message' => 'Login successful'], 200);
         }
-
+    
+        // If login attempt fails, return invalid credentials response
+        Log::warning('Login failed for email', ['email' => $credentials['email']]);
         return response()->json(['error' => 'Invalid credentials'], 401);
     }
+    
 
     public function currentUser(Request $request)
     {
@@ -100,6 +126,7 @@ class UserApiController extends Controller
             'password' => 'required|string|min:8',
             'role_id' => 'required|exists:roles,roleid',
             'verified' => 'boolean',
+            'email_verified_at' => 'boolean',
             'firstname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
             'profilepicture' => 'nullable|string',
@@ -124,8 +151,19 @@ class UserApiController extends Controller
             'password' => Hash::make($request->password),
             'role_id' => $request->role_id,
             'verified' => $request->has('verified') ? $request->verified : false,
+            'email_verified_at' => $request->has('email_verified') ? $request->email_verified_at : false,
         ]);
         Log::info('User created successfully with ID:', [$user->id]);
+
+        $verificationCode = Str::random(6); // Generate a 6-digit code
+
+    // Save the verification code and set the expiration (optional)
+            $user->verification_code = $verificationCode;
+            $user->verification_code_expires_at = null; // Set expiration to null if no expiry is needed
+            $user->save();
+
+            // Step 3: Send the verification code via email
+            $user->notify(new CustomVerifyEmail($verificationCode));
 
         // Step 2: Create Personal Information
         $this->personalInfoModel->create([
@@ -314,27 +352,37 @@ class UserApiController extends Controller
     {
         // Define the role IDs for "Graphic Designer" and "Printing Provider"
         $roleIds = [3, 4]; // Assuming 3 is Graphic Designer and 4 is Printing Provider
-
-        // Fetch users with the specified roles
+    
+        // Fetch users with the specified roles and include their personal information and about me content
         $users = User::whereIn('role_id', $roleIds)
-            ->with('personalInformation') // Load personal information directly
+            ->with(['personalInformation', 'aboutMe']) // Eager load personal information and about me
             ->get();
-
+    
         // Define a mapping of role IDs to role names
         $roleNames = [
             3 => 'Graphic Designer',
             4 => 'Printing Provider',
         ];
-
-        // Add the role name to each user based on their role_id
+    
+        // Add the role name, about me content, and average rating to each user based on their role_id
         foreach ($users as $user) {
+            // Add role name
             $user->role_name = $roleNames[$user->role_id] ?? 'Unknown'; // Set the role name, default to 'Unknown' if not found
+    
+            // Add AboutMe content if available
+            $user->about_me_content = $user->aboutMe ? $user->aboutMe->content : null;
+    
+            // Directly calculate the average rating using the Rating model and cast to float
+            $averageRating = Rating::where('rated_user_id', $user->id)->avg('rating');
+            $user->average_rating = (float) $averageRating ?: 0; // Ensure it's a float and set to 0 if no ratings exist
         }
-
+    
         Log::info('Retrieved users for roles:', ['role_ids' => $roleIds, 'users' => $users]);
-
+    
         return response()->json(['users' => $users], 200);
     }
+    
+
     public function updateUserBioSkills(Request $request, $id)
     {
         Log::info('Incoming request data for user profile update:', $request->all());

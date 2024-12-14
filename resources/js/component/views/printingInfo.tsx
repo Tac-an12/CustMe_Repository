@@ -15,8 +15,8 @@ const PrintingInformationPage = () => {
 
   const [selectedPrintingServices, setSelectedPrintingServices] = useState<PrintingSkill[]>([]);
   const [printingSkillsList, setPrintingSkillsList] = useState<PrintingSkill[]>([]);
-  const [portfolioFile, setPortfolioFile] = useState<File | null>(null); // Changed to single file
-  const [certificationFile, setCertificationFile] = useState<File | null>(null); // Changed to single file
+  const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
+  const [certificationFiles, setCertificationFiles] = useState<File[]>([]);
   const [bio, setBio] = useState("");
 
   useEffect(() => {
@@ -32,18 +32,18 @@ const PrintingInformationPage = () => {
   }, []);
 
   const handlePortfolioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files; // Get the FileList
+    const files = e.target.files;
 
-    if (files && files.length > 0) {
-      setPortfolioFile(files[0]); // Set the first file only
+    if (files) {
+      setPortfolioFiles((prevFiles) => [...prevFiles, ...Array.from(files)]);
     }
   };
 
   const handleCertificationsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files; // Get the FileList
+    const files = e.target.files;
 
-    if (files && files.length > 0) {
-      setCertificationFile(files[0]); // Set the first file only
+    if (files) {
+      setCertificationFiles((prevFiles) => [...prevFiles, ...Array.from(files)]);
     }
   };
 
@@ -51,7 +51,7 @@ const PrintingInformationPage = () => {
     e.preventDefault();
 
     // Validate required fields
-    if (!roleId || selectedPrintingServices.length === 0 || !bio || !portfolioFile) {
+    if (!roleId || selectedPrintingServices.length === 0 || !bio || portfolioFiles.length === 0) {
       alert("Please complete all required fields.");
       return;
     }
@@ -63,8 +63,8 @@ const PrintingInformationPage = () => {
     console.log("Role ID:", roleId);
     console.log("Bio:", bio);
     console.log("Selected Printing Service IDs:", selectedPrintingServiceIds);
-    console.log("Selected Portfolio File:", portfolioFile?.name);
-    console.log("Selected Certification File:", certificationFile?.name);
+    console.log("Selected Portfolio Files:", portfolioFiles.map((file) => file.name));
+    console.log("Selected Certification Files:", certificationFiles.map((file) => file.name));
 
     // Navigate to /register with collected data
     navigate("/register", {
@@ -72,8 +72,8 @@ const PrintingInformationPage = () => {
         roleId,
         bio,
         printingServices: selectedPrintingServiceIds,
-        portfolioFile, // Pass the single portfolio file
-        certificationFile, // Pass the single certification file
+        portfolioFiles, // Pass the portfolio files
+        certificationFiles, // Pass the certification files
       },
     });
   };
@@ -92,52 +92,98 @@ const PrintingInformationPage = () => {
               onChange={(event, newValue) => setSelectedPrintingServices(newValue)}
               renderTags={(value, getTagProps) =>
                 value.map((option, index) => (
-                  <Chip label={option.printing_skill_name} {...getTagProps({ index })} variant="outlined" />
+                  <Chip
+                    label={option.printing_skill_name}
+                    {...getTagProps({ index })}
+                    variant="outlined"
+                  />
                 ))
               }
               renderInput={(params) => (
-                <TextField {...params} variant="outlined" label="Printing Services" placeholder="Select Services" fullWidth />
+                <TextField
+                  {...params}
+                  variant="outlined"
+                  label="Printing Services"
+                  placeholder="Select Services"
+                  fullWidth
+                />
               )}
             />
           </div>
 
-          {/* Portfolio File Upload */}
+          {/* Portfolio Files Upload */}
           <div className="mb-3">
-            <label htmlFor="portfolio-upload" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="portfolio-upload"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Portfolio:
             </label>
             <div className="border-dashed border-2 border-gray-400 rounded-lg p-3 text-center bg-white">
               <p className="text-gray-500 text-sm mb-2">Drag & Drop here</p>
               <p className="text-gray-500 text-sm mb-3">or</p>
-              <label htmlFor="portfolio-upload" className="text-blue-500 hover:underline cursor-pointer">
-                Browse file
+              <label
+                htmlFor="portfolio-upload"
+                className="text-blue-500 hover:underline cursor-pointer"
+              >
+                Browse files
               </label>
-              <input id="portfolio-upload" type="file" onChange={handlePortfolioFileChange} className="hidden" />
-              {portfolioFile && (
+              <input
+                id="portfolio-upload"
+                type="file"
+                multiple
+                onChange={handlePortfolioFileChange}
+                className="hidden"
+              />
+              {portfolioFiles.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-gray-700 text-sm">Selected File:</p>
-                  <p className="text-gray-700 text-sm">{portfolioFile.name}</p>
+                  <p className="text-gray-700 text-sm">Selected Files:</p>
+                  <ul>
+                    {portfolioFiles.map((file, index) => (
+                      <li key={index} className="text-gray-700 text-sm">
+                        {file.name}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Certifications File Upload */}
+          {/* Certifications Files Upload */}
           <div className="mb-3">
-            <label htmlFor="certifications-upload" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="certifications-upload"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Certifications/Accreditations (Optional):
             </label>
             <div className="border-dashed border-2 border-gray-400 rounded-lg p-3 text-center bg-white">
               <p className="text-gray-500 text-sm mb-2">Drag & Drop here</p>
               <p className="text-gray-500 text-sm mb-3">or</p>
-              <label htmlFor="certifications-upload" className="text-blue-500 hover:underline cursor-pointer">
-                Browse file
+              <label
+                htmlFor="certifications-upload"
+                className="text-blue-500 hover:underline cursor-pointer"
+              >
+                Browse files
               </label>
-              <input id="certifications-upload" type="file" onChange={handleCertificationsFileChange} className="hidden" />
-              {certificationFile && (
+              <input
+                id="certifications-upload"
+                type="file"
+                multiple
+                onChange={handleCertificationsFileChange}
+                className="hidden"
+              />
+              {certificationFiles.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-gray-700 text-sm">Selected File:</p>
-                  <p className="text-gray-700 text-sm">{certificationFile.name}</p>
+                  <p className="text-gray-700 text-sm">Selected Files:</p>
+                  <ul>
+                    {certificationFiles.map((file, index) => (
+                      <li key={index} className="text-gray-700 text-sm">
+                        {file.name}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>

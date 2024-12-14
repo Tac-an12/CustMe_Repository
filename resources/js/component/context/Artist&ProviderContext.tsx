@@ -20,6 +20,8 @@ interface ArtistAndProviderProfile {
   verified: number;
   role_name: string;
   personal_information: PersonalInformation;
+  about_me_content: string | null;
+  average_rating: number; // New field for "Average Rating"
 }
 
 interface ArtistAndProviderContextProps {
@@ -51,6 +53,8 @@ export const ArtistAndProviderProvider: React.FC<ArtistAndProviderProviderProps>
           verified: user.verified,
           role_name: user.role_name,
           personal_information: user.personal_information,
+          about_me_content: user.about_me_content, // Adding "About Me" content to the profile
+          average_rating: user.average_rating, // Adding "Average Rating"
         }));
         setProfiles(fetchedProfiles);
         console.log('Fetched artist and printing provider profiles:', fetchedProfiles);

@@ -28,6 +28,20 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ open, onClose }) =>
         }
     }, [profile, open]);
 
+    const handleFileChange = (
+        file: File | undefined,
+        setter: React.Dispatch<React.SetStateAction<File | undefined>>,
+    ) => {
+        if (file) {
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            if (allowedTypes.includes(file.type)) {
+                setter(file);
+            } else {
+                alert('Invalid file type. Only JPG, JPEG, and PNG are allowed.');
+            }
+        }
+    };
+
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
@@ -90,9 +104,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ open, onClose }) =>
                         }}
                         error={zipcode.length !== 11 || isNaN(Number(zipcode))}
                         helperText={
-                            zipcode.length !== 11 || isNaN(Number(zipcode)) 
-                            ? 'Zipcode must be exactly 11 digits'
-                            : ''
+                            zipcode.length !== 11 || isNaN(Number(zipcode))
+                                ? 'Zipcode must be exactly 11 digits'
+                                : ''
                         }
                     />
 
@@ -111,7 +125,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ open, onClose }) =>
                     <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => e.target.files && setProfilePicture(e.target.files[0])}
+                        onChange={(e) => handleFileChange(e.target.files?.[0], setProfilePicture)}
                     />
                     {profilepicture && (
                         <div className="mt-2">
@@ -139,7 +153,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ open, onClose }) =>
                     <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => e.target.files && setCoverPhoto(e.target.files[0])}
+                        onChange={(e) => handleFileChange(e.target.files?.[0], setCoverPhoto)}
                     />
                     {coverphoto && (
                         <div className="mt-2">
