@@ -1,5 +1,5 @@
 # Use the official PHP image as the base
-FROM php:8.1-fpm
+FROM php:8.2-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     && apt-get clean
 
-# Configure GD extension with FreeType and JPEG
+# Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install zip pdo_mysql gd xml intl mbstring
 
@@ -31,12 +31,9 @@ WORKDIR /var/www
 COPY composer.json composer.lock ./
 
 # Install Composer dependencies
-RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache --timeout=300 --memory-limit=-1
+RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
 
-# Debug: List files in the working directory
-RUN ls -la /var/www
-
-# Now copy the rest of the Laravel files
+# Copy the rest of the Laravel application
 COPY . .
 
 # Set permissions for Laravel storage and cache
