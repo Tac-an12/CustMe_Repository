@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libxml2-dev \
-    libmysqlclient-dev \  # Required for pdo_mysql extension
-    && docker-php-ext-install zip pdo_mysql
+    libmysqlclient-dev && \
+    docker-php-ext-install zip pdo_mysql
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
