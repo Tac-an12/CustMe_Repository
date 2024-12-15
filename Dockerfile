@@ -21,11 +21,11 @@ WORKDIR /var/www
 # Copy only composer files first
 COPY composer.json composer.lock ./
 
+# Install Composer dependencies
+RUN composer install --no-dev --optimize-autoloader
+
 # Debug: List files in the working directory
 RUN ls -la /var/www
-
-# Temporarily comment out composer install
-# RUN composer install --no-dev --optimize-autoloader -vvv
 
 # Now copy the rest of the Laravel files
 COPY . .
