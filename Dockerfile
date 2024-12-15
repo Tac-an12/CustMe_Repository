@@ -1,7 +1,7 @@
 # Use the official PHP image as the base
 FROM php:8.1-fpm
 
-# Install system dependencies and PHP extensions
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
@@ -12,7 +12,10 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && apt-get clean
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install zip pdo_mysql gd xml intl mbstring
 
 # Install Composer
@@ -24,13 +27,13 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 # Set working directory
 WORKDIR /var/www
 
-# Copy only composer files first (composer.json and composer.lock)
+# Copy only composer files first
 COPY composer.json composer.lock ./
 
-# Install Composer dependencies (this will be run in a separate step)
+# Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache --timeout=300 --memory-limit=-1
 
-# Debug: List files in the working directory after composer install
+# Debug: List files in the working directory
 RUN ls -la /var/www
 
 # Now copy the rest of the Laravel files
