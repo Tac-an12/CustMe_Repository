@@ -1,7 +1,7 @@
 # Use PHP 8.2 official image
 FROM php:8.2-fpm
 
-# Install system dependencies and libraries
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
@@ -14,14 +14,19 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Debug: Check if required libraries are installed
-RUN ldconfig -p | grep jpeg && ldconfig -p | grep freetype
+# Debug: Check installed libraries
+RUN ldconfig -p | grep -E 'libjpeg|libfreetype|libpng'
 
-# Configure GD extension for PHP 8.2
+# Configure GD
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
-# Install PHP extensions
-RUN docker-php-ext-install zip pdo_mysql gd xml intl mbstring
+# Debug: Install extensions one by one
+RUN docker-php-ext-install pdo_mysql
+RUN docker-php-ext-install zip
+RUN docker-php-ext-install gd
+RUN docker-php-ext-install xml
+RUN docker-php-ext-install intl
+RUN docker-php-ext-install mbstring
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -29,20 +34,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy composer files
+# Copy Laravel files
 COPY composer.json composer.lock ./
-
-# Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
 
-# Copy Laravel files
 COPY . .
 
-# Set permissions for Laravel storage and cache
+# Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
 # Expose port
 EXPOSE 8000
 
-# Run Laravel server
+# Start Laravel server
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
