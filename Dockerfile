@@ -9,11 +9,13 @@ RUN apt-get update && apt-get install -y \
     curl \
     libxml2-dev \
     libpng-dev \
-    libjpeg62-turbo-dev \
+    libjpeg-dev \
     libfreetype6-dev \
     libicu-dev \
     g++ \
-    && docker-php-ext-install zip pdo_mysql mbstring xml gd intl
+    && docker-php-ext-install zip pdo_mysql mbstring xml gd intl \
+    || tail -f /var/log/apt/term.log
+
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
