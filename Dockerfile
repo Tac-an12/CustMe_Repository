@@ -1,12 +1,17 @@
 # Use the official PHP image as the base
 FROM php:8.1-fpm
 
-# Install system dependencies and PHP extensions
+# Install system dependencies and PHP extensions build tools
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     git \
     curl \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libxml2-dev \
+    libmysqlclient-dev \  # Required for pdo_mysql extension
     && docker-php-ext-install zip pdo_mysql
 
 # Install Composer
