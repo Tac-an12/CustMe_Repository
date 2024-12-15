@@ -1,22 +1,13 @@
 # Use the official PHP image as the base
 FROM php:8.1-fpm
 
-# Install system dependencies
-RUN apt-get clean && apt-get update -y && \
-    apt-get install -y \
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     git \
     curl \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libxml2-dev \
-    libmysqlclient-dev
-
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
-    docker-php-ext-install zip pdo_mysql gd
+    && docker-php-ext-install zip pdo_mysql
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -27,7 +18,7 @@ WORKDIR /var/www
 # Copy Laravel files
 COPY . .
 
-# Install Laravel dependencies using Composer
+# Install Laravel dependencies and optimize autoloader
 RUN composer install --no-dev --optimize-autoloader
 
 # Set permissions for Laravel storage and cache
