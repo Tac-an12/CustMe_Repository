@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libicu-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install zip pdo_mysql gd xml intl
+    && docker-php-ext-install zip pdo_mysql gd xml intl mbstring
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -27,8 +27,8 @@ WORKDIR /var/www
 # Copy only composer files first (composer.json and composer.lock)
 COPY composer.json composer.lock ./
 
-# Install Composer dependencies with no cache to avoid issues
-RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
+# Install Composer dependencies (this will be run in a separate step)
+RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache --timeout=300 --memory-limit=-1
 
 # Debug: List files in the working directory after composer install
 RUN ls -la /var/www
