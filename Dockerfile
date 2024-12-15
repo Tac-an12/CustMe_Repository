@@ -7,18 +7,10 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
-    libxml2-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libicu-dev \
-    g++ \
-    libonig-dev \  # Install the oniguruma library
-    && docker-php-ext-install zip pdo_mysql mbstring xml gd intl \
-    && apt-get clean
+    && docker-php-ext-install zip pdo_mysql
 
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www
