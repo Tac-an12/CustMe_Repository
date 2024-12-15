@@ -8,14 +8,15 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
     && apt-get clean
 
-# Install required PHP extensions
-RUN docker-php-ext-install zip pdo_mysql gd xml intl mbstring
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install zip pdo_mysql gd xml intl mbstring
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
