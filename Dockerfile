@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
+    libonig-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Debug: Check installed libraries
