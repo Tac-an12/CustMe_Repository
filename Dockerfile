@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     && apt-get clean
 
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+# Configure GD extension with FreeType and JPEG
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/freetype2 --with-jpeg-dir=/usr/include \
     && docker-php-ext-install zip pdo_mysql gd xml intl mbstring
 
 # Install Composer
