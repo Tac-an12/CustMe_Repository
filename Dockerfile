@@ -14,9 +14,8 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     && apt-get clean
 
-# Configure and install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install zip pdo_mysql gd xml intl mbstring
+# Install required PHP extensions
+RUN docker-php-ext-install zip pdo_mysql gd xml intl mbstring
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
