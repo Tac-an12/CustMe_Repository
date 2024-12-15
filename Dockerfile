@@ -18,6 +18,9 @@ WORKDIR /var/www
 # Copy Laravel files
 COPY . .
 
+# Install Laravel dependencies using Composer
+RUN composer install --no-dev --optimize-autoloader
+
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
