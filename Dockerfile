@@ -18,11 +18,14 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 # Set working directory
 WORKDIR /var/www
 
-# Copy Laravel files
-COPY . .
+# Copy only composer files first
+COPY composer.json composer.lock ./
 
 # Install Laravel dependencies and optimize autoloader
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader -vvv
+
+# Now copy the rest of the Laravel files
+COPY . .
 
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
