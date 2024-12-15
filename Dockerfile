@@ -12,11 +12,9 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
-    && apt-get clean
-
-# Configure and install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install zip pdo_mysql gd xml intl mbstring
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install zip pdo_mysql gd xml intl mbstring \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -32,6 +30,9 @@ COPY composer.json composer.lock ./
 
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
+
+# Debug: Add a build step to log installed extensions and libraries
+RUN php -m && php -i && composer --version && ls -la /var/www
 
 # Copy the rest of the Laravel application
 COPY . .
