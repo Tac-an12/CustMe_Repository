@@ -2,7 +2,7 @@
 FROM php:8.1-fpm
 
 # Install system dependencies
-RUN apt-get update -y && \
+RUN apt-get clean && apt-get update -y && \
     apt-get install -y \
     libzip-dev \
     unzip \
@@ -15,7 +15,8 @@ RUN apt-get update -y && \
     libmysqlclient-dev
 
 # Install PHP extensions
-RUN docker-php-ext-install zip pdo_mysql
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install zip pdo_mysql gd
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
