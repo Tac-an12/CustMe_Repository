@@ -13,8 +13,10 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libicu-dev \
     g++ \
+    libonig-dev \   # Install the oniguruma library
     && docker-php-ext-install zip pdo_mysql mbstring xml gd intl \
-    || tail -f /var/log/apt/term.log
+    && apt-get clean
+
 
 
 # Install Composer
