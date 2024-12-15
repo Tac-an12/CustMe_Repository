@@ -7,7 +7,13 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
-    && docker-php-ext-install zip pdo_mysql
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libxml2-dev \
+    libicu-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install zip pdo_mysql gd xml intl
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -18,13 +24,13 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 # Set working directory
 WORKDIR /var/www
 
-# Copy only composer files first
+# Copy only composer files first (composer.json and composer.lock)
 COPY composer.json composer.lock ./
 
-# Install Composer dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install Composer dependencies with no cache to avoid issues
+RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
 
-# Debug: List files in the working directory
+# Debug: List files in the working directory after composer install
 RUN ls -la /var/www
 
 # Now copy the rest of the Laravel files
