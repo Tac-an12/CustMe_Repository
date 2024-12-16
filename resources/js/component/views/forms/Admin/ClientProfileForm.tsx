@@ -27,7 +27,6 @@ import RatingSection from "../../forms/Admin/RatingSection"; // Import RatingSec
 import { IconButton } from "@mui/material"; // For the IconButton component
 import { Chat as ChatIcon } from "@mui/icons-material"; // For the Chat icon
 
-
 const ClientProfile = () => {
   const { id } = useParams<{ id: string | undefined }>();
   const userId = id ? parseInt(id) : undefined;
@@ -35,7 +34,7 @@ const ClientProfile = () => {
   const { user } = useAuth();
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<number>(0);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (userId) {
@@ -54,17 +53,18 @@ const ClientProfile = () => {
   }
 
   const coverPhoto = profile.personal_information?.coverphoto
-    ? `http://127.0.0.1:8000/storage/${profile.personal_information.coverphoto}`
+    ? `https://custme-repository.onrender.com/storage/${profile.personal_information.coverphoto}`
     : "default-cover-image-url";
 
   const profilePicture = profile.personal_information?.profilepicture
-    ? `http://127.0.0.1:8000/storage/${profile.personal_information.profilepicture}`
+    ? `https://custme-repository.onrender.com/storage/${profile.personal_information.profilepicture}`
     : "default-profile-image-url";
 
   const images =
     profile.posts?.flatMap((post) =>
       post.images.map(
-        (image) => `http://127.0.0.1:8000/storage/${image.image_path}`
+        (image) =>
+          `https://custme-repository.onrender.com/storage${image.image_path}`
       )
     ) || [];
 

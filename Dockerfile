@@ -4,7 +4,7 @@ FROM node:18 AS frontend
 WORKDIR /app
 
 # Install dependencies for React
-COPY frontend/package.json frontend/package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./ 
 RUN npm install
 
 # Build the React app for production
@@ -34,6 +34,9 @@ COPY backend ./
 
 # Set appropriate file permissions for Laravel
 RUN chown -R www-data:www-data /var/www
+
+# Create the symbolic link for storage (important for Laravel)
+RUN php artisan storage:link
 
 # Copy the built React app into Laravel's public directory
 COPY --from=frontend /app/dist /var/www/public
