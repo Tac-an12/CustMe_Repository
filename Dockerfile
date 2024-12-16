@@ -2,7 +2,6 @@
 FROM php:8.2-fpm
 
 # Install system dependencies
-# Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     libzip-dev \
@@ -29,17 +28,17 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 # Set working directory
 WORKDIR /var/www
 
-# Copy only composer files first
-COPY composer.json composer.lock ./
+# Copy the Laravel application files first (to make sure artisan is available)
+COPY . .
+
+# Copy only composer files first (not needed if you're copying all files above)
+# COPY composer.json composer.lock ./
 
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
 
 # Debug: Add a build step to log installed extensions and libraries
 RUN php -m && php -i && composer --version && ls -la /var/www
-
-# Copy the rest of the Laravel application
-COPY . .
 
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
