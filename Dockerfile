@@ -45,6 +45,10 @@ COPY . .
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
+# Ensure correct permissions for artisan and other files
+RUN chown -R www-data:www-data /var/www
+RUN chmod -R 755 /var/www
+
 # Set up environment for React build
 WORKDIR /var/www/resources/js
 
