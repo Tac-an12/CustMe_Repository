@@ -35,7 +35,7 @@ COPY . .
 # COPY composer.json composer.lock ./ 
 
 # Ensure the .env file is present in the Docker container (if not set via Render)
-COPY .env .env
+
 
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
