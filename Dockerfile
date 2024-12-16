@@ -1,4 +1,4 @@
-# Use PHP 8.2 official image
+# Use the official PHP image as the base
 FROM php:8.2-fpm
 
 # Install system dependencies
@@ -12,46 +12,36 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
-    libonig-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install zip pdo_mysql gd xml intl mbstring \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Configure GD extension with JPEG and Freetype support
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql zip gd xml intl mbstring
-
-# Create a non-root user and set ownership for the Laravel app
-RUN useradd -m -s /bin/bash laravel
-RUN chown -R laravel:laravel /var/www
+# Set memory limit for Composer
+ENV COMPOSER_MEMORY_LIMIT=-1
 
 # Set working directory
 WORKDIR /var/www
 
-# Switch back to root to create directories
-USER root
-
-# Copy the whole Laravel app (including artisan) before running composer
-COPY . .
-
-# Create necessary directories with the correct permissions
-RUN mkdir -p storage/logs && \
-    chown -R laravel:laravel storage bootstrap/cache
-
-# Switch to the non-root user
-USER laravel
+# Copy only composer files first
+COPY composer.json composer.lock ./
 
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
 
-# Set permissions for Laravel storage and cache
-RUN chown -R laravel:laravel /var/www/storage /var/www/bootstrap/cache
+# Debug: Add a build step to log installed extensions and libraries
+RUN php -m && php -i && composer --version && ls -la /var/www
 
-# Expose port for Laravel
+# Copy the rest of the Laravel application
+COPY . .
+
+# Set permissions for Laravel storage and cache
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+
+# Expose port 8000
 EXPOSE 8000
 
-# Start Laravel server
+# Start Laravel development server
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
