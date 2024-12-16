@@ -2,22 +2,21 @@
 FROM php:8.2-fpm
 
 # Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     git \
     curl \
     libpng-dev \
-    libjpeg62-turbo-dev \
+    libjpeg-dev \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
-    libonig-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install zip pdo_mysql gd xml intl mbstring \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
+# Configure GD extension with FreeType and JPEG
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install zip pdo_mysql gd xml intl mbstring
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -28,23 +27,17 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 # Set working directory
 WORKDIR /var/www
 
-# Copy the Laravel application files first (to make sure artisan is available)
-COPY . .
-
-# Copy only composer files first (not needed if you're copying all files above)
-# COPY composer.json composer.lock ./ 
-
-# Ensure the .env file is present in the Docker container (if not set via Render)
-
+# Copy only composer files first
+COPY composer.json composer.lock ./
 
 # Install Composer dependencies
-RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
+RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache --timeout=300 --memory-limit=-1
 
-# Clear Laravel's configuration and cache
-RUN php artisan config:clear && php artisan cache:clear
+# Debug: List files in the working directory
+RUN ls -la /var/www
 
-# Debug: Add a build step to log installed extensions and libraries
-RUN php -m && php -i && composer --version && ls -la /var/www
+# Now copy the rest of the Laravel files
+COPY . .
 
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
