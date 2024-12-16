@@ -37,6 +37,10 @@ USER laravel
 # Copy the whole Laravel app (including artisan) before running composer
 COPY . .
 
+# Create necessary directories with the correct permissions
+RUN mkdir -p storage/logs && \
+    chown -R laravel:laravel storage bootstrap/cache
+
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
 
