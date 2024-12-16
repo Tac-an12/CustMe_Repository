@@ -2,7 +2,9 @@
 FROM php:8.2-fpm
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
     libzip-dev \
     unzip \
     git \
@@ -12,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
-    libonig-dev \  # Added for oniguruma
+    libonig-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install zip pdo_mysql gd xml intl mbstring \
     && apt-get clean \
