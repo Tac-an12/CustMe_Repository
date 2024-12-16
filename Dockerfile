@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
-    libonig-dev \  # Install the Oniguruma package for multibyte regex support
+    libonig-dev \
     && apt-get clean
 
 # Configure GD extension with FreeType and JPEG
