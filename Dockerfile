@@ -32,10 +32,16 @@ WORKDIR /var/www
 COPY . .
 
 # Copy only composer files first (not needed if you're copying all files above)
-# COPY composer.json composer.lock ./
+# COPY composer.json composer.lock ./ 
+
+# Ensure the .env file is present in the Docker container (if not set via Render)
+COPY .env .env
 
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
+
+# Clear Laravel's configuration and cache
+RUN php artisan config:clear && php artisan cache:clear
 
 # Debug: Add a build step to log installed extensions and libraries
 RUN php -m && php -i && composer --version && ls -la /var/www
