@@ -1,41 +1,62 @@
-# Base image for Laravel (PHP + Composer)
-FROM php:8.2-fpm
+# Step 1: Build the frontend (React) app
+FROM node:16 AS frontend
+
+# Set working directory for frontend
+WORKDIR /var/www/frontend
+
+# Copy React files and install dependencies
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm install
+
+# Build the React app
+COPY frontend/ ./
+RUN npm run build
+
+# Step 2: Set up Laravel (backend) app
+FROM php:8.2-fpm AS backend
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    unzip \
     git \
     curl \
     libpng-dev \
-    libonig-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     libxml2-dev \
-    zip \
-    unzip \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    libicu-dev \
+    libonig-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Configure GD extension with JPEG and Freetype support
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql zip gd xml intl mbstring
 
 # Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set the working directory
+# Set working directory for Laravel
 WORKDIR /var/www
 
-# Copy Laravel files into the container
-COPY backend/ . # Assuming the Laravel app is in a `backend/` folder
+# Copy Laravel's composer files
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Copy the rest of the Laravel app
+COPY . .
 
-# Clear and cache configurations
-RUN php artisan config:clear \
-    && php artisan route:clear \
-    && php artisan view:clear \
-    && php artisan config:cache
+# Step 3: Copy the built React files into the Laravel public folder
+COPY --from=frontend /var/www/frontend/build /var/www/public
 
-# Set permissions for storage and cache
-RUN chown -R www-data:www-data /var/www \
+# Set permissions for Laravel storage and cache
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Expose the PHP-FPM port
-EXPOSE 9000
+# Expose port for Laravel
+EXPOSE 8000
 
-# Start the PHP-FPM server
-CMD ["php-fpm"]
+# Start Laravel server
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
