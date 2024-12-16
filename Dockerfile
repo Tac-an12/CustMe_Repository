@@ -28,12 +28,6 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 # Set timeout for Composer installation
 ENV COMPOSER_PROCESS_TIMEOUT=300
 
-# Set environment variables directly in Dockerfile
-ENV PUSHER_APP_KEY=your_pusher_key
-ENV PUSHER_APP_SECRET=your_pusher_secret
-ENV PUSHER_APP_ID=your_pusher_app_id
-ENV PUSHER_APP_CLUSTER=your_pusher_cluster
-
 # Set working directory
 WORKDIR /var/www
 
