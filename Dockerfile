@@ -34,14 +34,14 @@ WORKDIR /var/www
 # Copy only composer files first
 COPY composer.json composer.lock ./ 
 
-# Install Composer dependencies without the --memory-limit option
+# Now copy the rest of the Laravel files (including artisan)
+COPY . .
+
+# Install Composer dependencies after copying all necessary files
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
 
 # Debug: List files in the working directory
 RUN ls -la /var/www
-
-# Now copy the rest of the Laravel files
-COPY . .
 
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
