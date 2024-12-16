@@ -34,7 +34,7 @@ WORKDIR /var/www
 # Copy only composer files first
 COPY composer.json composer.lock ./ 
 
-# Now copy the rest of the Laravel files (including artisan)
+# Now copy the rest of the Laravel files (excluding .env)
 COPY . . 
 
 # Install Composer dependencies after copying all necessary files
