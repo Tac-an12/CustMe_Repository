@@ -21,15 +21,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Configure GD extension with JPEG and Freetype support
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
-# Install PHP extensions one by one
-RUN docker-php-ext-install pdo_mysql
-RUN docker-php-ext-install zip
-RUN docker-php-ext-install gd
-RUN docker-php-ext-install xml
-RUN docker-php-ext-install intl
-RUN docker-php-ext-install mbstring
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql zip gd xml intl mbstring
 
-# Create a non-root user and set ownership
+# Create a non-root user and set ownership for the Laravel app
 RUN useradd -m -s /bin/bash laravel
 RUN chown -R laravel:laravel /var/www
 
@@ -39,17 +34,14 @@ WORKDIR /var/www
 # Switch to the non-root user
 USER laravel
 
-# Copy only Composer files first to leverage Docker layer caching
-COPY composer.json composer.lock ./
+# Copy the whole Laravel app (including artisan) before running composer
+COPY . .
 
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
 
-# Copy the rest of the Laravel app files
-COPY . .
-
 # Set permissions for Laravel storage and cache
-RUN chown -R laravel:laravel /var/www/storage /var/www/bootstrap/cache /var/www/artisan
+RUN chown -R laravel:laravel /var/www/storage /var/www/bootstrap/cache
 
 # Expose port for Laravel
 EXPOSE 8000
