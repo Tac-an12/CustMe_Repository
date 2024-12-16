@@ -31,8 +31,8 @@ RUN chown -R laravel:laravel /var/www
 # Set working directory
 WORKDIR /var/www
 
-# Switch to the non-root user
-USER laravel
+# Switch back to root to create directories
+USER root
 
 # Copy the whole Laravel app (including artisan) before running composer
 COPY . .
@@ -40,6 +40,9 @@ COPY . .
 # Create necessary directories with the correct permissions
 RUN mkdir -p storage/logs && \
     chown -R laravel:laravel storage bootstrap/cache
+
+# Switch to the non-root user
+USER laravel
 
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache
