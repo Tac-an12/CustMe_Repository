@@ -25,14 +25,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set memory limit for Composer
 ENV COMPOSER_MEMORY_LIMIT=-1
 
+# Set timeout for Composer installation
+ENV COMPOSER_PROCESS_TIMEOUT=300
+
 # Set working directory
 WORKDIR /var/www
 
 # Copy only composer files first
 COPY composer.json composer.lock ./ 
 
-# Install Composer dependencies
-RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache --timeout=300 --memory-limit=-1
+# Install Composer dependencies without the --timeout option
+RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache --memory-limit=-1
 
 # Debug: List files in the working directory
 RUN ls -la /var/www
