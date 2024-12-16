@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
+    libonig-dev \  # Install the Oniguruma package for multibyte regex support
     && apt-get clean
 
 # Configure GD extension with FreeType and JPEG
@@ -28,7 +29,7 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 WORKDIR /var/www
 
 # Copy only composer files first
-COPY composer.json composer.lock ./
+COPY composer.json composer.lock ./ 
 
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-cache --timeout=300 --memory-limit=-1
