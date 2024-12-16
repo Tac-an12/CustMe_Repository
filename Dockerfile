@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     libxml2-dev \
     libicu-dev \
+    libonig-dev \  # Add this line for oniguruma
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install zip pdo_mysql gd xml intl mbstring \
     && apt-get clean \
